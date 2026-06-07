@@ -1,5 +1,11 @@
 Job Signals - Project Context
 
+IMPORTANT:
+
+The purpose of this project is not to build a job board.
+
+The purpose is to build a labor market intelligence asset that identifies hiring, skill, technology, and company signals before they become obvious and eventually monetizes those insights.
+
 Project Purpose
 
 Job Signals is being built as a labor market intelligence engine.
