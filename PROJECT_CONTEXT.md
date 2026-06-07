@@ -289,6 +289,51 @@ Priority 5:
 
 * Explore monetization
 
+Next Session Plan
+
+Priority 1: Job Deduplication
+
+Problem:
+
+* Same jobs can appear in multiple snapshots.
+* Historical analysis can become distorted.
+* Future trend calculations may overcount demand.
+
+Goal:
+
+* Identify jobs using source + external id when available.
+* Fall back to source + title + company.
+* Prevent duplicate storage.
+* Track first_seen and last_seen timestamps.
+
+Priority 2: New vs Existing Job Detection
+
+Goal:
+
+* Detect newly appeared jobs.
+* Detect jobs that disappeared.
+* Calculate net hiring change.
+
+Expected Output:
+
+* New jobs today
+* Removed jobs today
+* Net job change
+
+Priority 3: Third Data Source
+
+Candidates:
+
+* Greenhouse
+* Lever
+* Ashby
+* Wellfound
+
+Reason:
+
+* Improve signal quality and reduce dependence on Remotive/RemoteOK.
+
+
 ⸻
 
 Long-Term Vision
