@@ -2,6 +2,7 @@ import re
 import sqlite3
 from collections import Counter
 from datetime import datetime
+from signal_taxonomy import normalize_signal
 
 DB_NAME = "jobs.db"
 
@@ -325,6 +326,76 @@ def print_emerging_technology_score(growing_skills, latest_skill_companies):
         )
 
 
+# --- SIGNAL MEMORY ---
+def print_signal_memory(limit=5):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+
+    c.execute("""
+        SELECT DISTINCT snapshot_time
+        FROM skill_signals
+        ORDER BY snapshot_time DESC
+        LIMIT ?
+    """, (limit,))
+
+    snapshot_times = [row[0] for row in c.fetchall()]
+
+    if len(snapshot_times) < 2:
+        conn.close()
+        print("\n--- SIGNAL MEMORY ---\n")
+        print("Need at least 2 saved signal snapshots for memory.")
+        return
+
+    placeholders = ",".join("?" for _ in snapshot_times)
+
+    c.execute(f"""
+        SELECT snapshot_time, skill, count
+        FROM skill_signals
+        WHERE snapshot_time IN ({placeholders})
+    """, tuple(snapshot_times))
+
+    rows = c.fetchall()
+    conn.close()
+
+    signal_history = {}
+
+    for snapshot_time, skill, count in rows:
+        signal = normalize_signal(skill)
+        signal_history.setdefault(signal, {})
+        signal_history[signal][snapshot_time] = signal_history[signal].get(snapshot_time, 0) + count
+
+    ordered_times = sorted(snapshot_times)
+
+    print("\n--- SIGNAL MEMORY ---\n")
+
+    scored_signals = []
+
+    for signal, history in signal_history.items():
+        counts = [history.get(snapshot_time, 0) for snapshot_time in ordered_times]
+        latest_count = counts[-1]
+        earliest_count = counts[0]
+        change = latest_count - earliest_count
+        total = sum(counts)
+
+        if latest_count == 0 and total == 0:
+            continue
+
+        scored_signals.append((signal, latest_count, change, counts))
+
+    scored_signals.sort(key=lambda row: (abs(row[2]), row[1]), reverse=True)
+
+    for signal, latest_count, change, counts in scored_signals[:10]:
+        if change > 0:
+            direction = "rising"
+        elif change < 0:
+            direction = "falling"
+        else:
+            direction = "stable"
+
+        count_path = " → ".join(str(count) for count in counts)
+        print(f"{signal}: {count_path} | {direction} ({change:+})")
+
+
 def format_snapshot_time(snapshot_time):
     return datetime.fromtimestamp(int(snapshot_time)).strftime("%Y-%m-%d %I:%M:%S %p")
 
@@ -512,6 +583,7 @@ def compare_latest_snapshots():
         print("\nEmerging skills: none detected yet")
 
     print_emerging_technology_score(growing_skills, latest_skill_companies)
+    print_signal_memory()
     print("\n--- SIGNAL DATABASE ---\n")
     print("Category signals saved to: category_signals")
     print("Skill signals saved to: skill_signals")
