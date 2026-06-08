@@ -101,14 +101,30 @@ def calculate_conviction(count, company_count):
     return "LOW"
 
 # --- OPPORTUNITY SCORE ---
-def calculate_opportunity_score(score, conviction):
-    conviction_bonus = {
-        "HIGH": 100,
-        "MEDIUM": 40,
-        "LOW": 0,
-    }
+def calculate_opportunity_score(
+    count,
+    companies,
+    diff,
+    conviction,
+    max_count,
+    max_companies,
+    max_positive_diff,
+):
+    strength_score = (count / max_count) * 40 if max_count else 0
+    diversity_score = (companies / max_companies) * 25 if max_companies else 0
 
-    return score + conviction_bonus.get(conviction, 0)
+    conviction_score = {
+        "HIGH": 25,
+        "MEDIUM": 10,
+        "LOW": 0,
+    }.get(conviction, 0)
+
+    movement_score = 0
+    if diff > 0 and max_positive_diff > 0:
+        movement_score = (diff / max_positive_diff) * 10
+
+    total = strength_score + diversity_score + conviction_score + movement_score
+    return round(min(total, 100))
 
 def get_signal_examples(rows, target_signal, limit=3):
     companies = Counter()
@@ -134,9 +150,20 @@ def print_opportunity_ranking(skill_changes, limit=10):
     print("\n--- OPPORTUNITY RANKING ---\n")
 
     ranked = []
+    max_count = max((row[1] for row in skill_changes), default=0)
+    max_companies = max((row[3] for row in skill_changes), default=0)
+    max_positive_diff = max((row[2] for row in skill_changes if row[2] > 0), default=0)
 
     for signal, count, diff, companies, score, conviction in skill_changes:
-        opportunity_score = calculate_opportunity_score(score, conviction)
+        opportunity_score = calculate_opportunity_score(
+            count,
+            companies,
+            diff,
+            conviction,
+            max_count,
+            max_companies,
+            max_positive_diff,
+        )
 
         ranked.append(
             (
@@ -152,7 +179,7 @@ def print_opportunity_ranking(skill_changes, limit=10):
 
     for rank, (signal, opportunity_score, conviction, count, companies) in enumerate(ranked[:limit], start=1):
         print(
-            f"{rank}. {signal}: opportunity score {opportunity_score} | "
+            f"{rank}. {signal}: opportunity score {opportunity_score}/100 | "
             f"{conviction} conviction | {count} postings | {companies} companies"
         )
 
