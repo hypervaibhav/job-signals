@@ -11,6 +11,11 @@ from signal_taxonomy import normalize_signal
 
 DB_NAME = "jobs.db"
 
+CURRENT_LATEST_JOBS = 0
+CURRENT_PREVIOUS_JOBS = 0
+CURRENT_LATEST_SOURCE_MIX = {}
+CURRENT_PREVIOUS_SOURCE_MIX = {}
+
 
 def get_latest_two_snapshots():
     conn = sqlite3.connect(DB_NAME)
@@ -87,11 +92,32 @@ def calculate_source_mix(rows):
     return Counter(row[4] if len(row) > 4 else "unknown" for row in rows)
 
 
-def calculate_report_confidence(net_change, latest_jobs, previous_jobs):
+def calculate_report_confidence(
+    net_change,
+    latest_jobs,
+    previous_jobs,
+    latest_source_mix,
+    previous_source_mix,
+):
     if previous_jobs == 0:
         return "LOW", "Insufficient history"
 
     growth_ratio = abs(net_change) / max(previous_jobs, 1)
+
+    max_source_shift = 0
+
+    all_sources = set(latest_source_mix) | set(previous_source_mix)
+
+    for source in all_sources:
+        latest_pct = latest_source_mix.get(source, 0) / max(latest_jobs, 1)
+        previous_pct = previous_source_mix.get(source, 0) / max(previous_jobs, 1)
+        max_source_shift = max(max_source_shift, abs(latest_pct - previous_pct))
+
+    if max_source_shift > 0.25:
+        return (
+            "LOW",
+            "Source mix changed significantly. Results may be distorted by source expansion or source imbalance.",
+        )
 
     if growth_ratio > 0.25:
         return (
@@ -99,15 +125,15 @@ def calculate_report_confidence(net_change, latest_jobs, previous_jobs):
             "Large snapshot change detected. Results may be influenced by source expansion or sampling effects.",
         )
 
-    if growth_ratio > 0.10:
+    if growth_ratio > 0.10 or max_source_shift > 0.10:
         return (
             "MEDIUM",
-            "Moderate snapshot change detected. Interpret directional signals carefully.",
+            "Moderate snapshot or source-mix change detected. Interpret directional signals carefully.",
         )
 
     return (
         "HIGH",
-        "Snapshot size is stable. Signal comparisons are more reliable.",
+        "Snapshot size and source mix are stable. Signal comparisons are more reliable.",
     )
 
 # --- MARKET NARRATIVE ---
@@ -116,8 +142,10 @@ def print_market_narrative(net_change, category_changes, company_changes, skill_
 
     confidence, reason = calculate_report_confidence(
         net_change,
-        sum(x[1] for x in category_changes),
-        sum(max(0, x[1] - x[2]) for x in category_changes),
+        CURRENT_LATEST_JOBS,
+        CURRENT_PREVIOUS_JOBS,
+        CURRENT_LATEST_SOURCE_MIX,
+        CURRENT_PREVIOUS_SOURCE_MIX,
     )
 
     print(f"Confidence: {confidence}")
@@ -194,6 +222,16 @@ def print_daily_report():
 
     latest_source_mix = calculate_source_mix(latest)
     previous_source_mix = calculate_source_mix(previous)
+
+    global CURRENT_LATEST_JOBS
+    global CURRENT_PREVIOUS_JOBS
+    global CURRENT_LATEST_SOURCE_MIX
+    global CURRENT_PREVIOUS_SOURCE_MIX
+
+    CURRENT_LATEST_JOBS = len(latest)
+    CURRENT_PREVIOUS_JOBS = len(previous)
+    CURRENT_LATEST_SOURCE_MIX = latest_source_mix
+    CURRENT_PREVIOUS_SOURCE_MIX = previous_source_mix
 
     print("\n==============================")
     print("JOB SIGNALS DAILY REPORT")
