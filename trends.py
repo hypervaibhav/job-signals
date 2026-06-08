@@ -39,6 +39,9 @@ CATEGORIES = {
         "cfo",
         "coo",
         "executive",
+        "finance manager",
+        "accounting manager",
+        "accounts payable",
     ],
     "Education": [
         "teacher",
@@ -70,6 +73,7 @@ CATEGORIES = {
         "psychologist",
         "psicologo",
         "coach psicologo",
+        "behavior technician",
     ],
     "Engineering": [
         "software",
@@ -121,6 +125,12 @@ CATEGORIES = {
         "enterprise hunter",
         "enterprise grower",
         "business value manager",
+        "client partner",
+        "account associate",
+        "account expansion",
+        "customer manager",
+        "解决方案工程师",
+        "客户经理",
     ],
     "Marketing": [
         "marketing",
@@ -166,6 +176,8 @@ CATEGORIES = {
         "partnerships manager",
         "developer solutions",
         "director of product communications",
+        "on-site associate",
+        "onsite associate",
     ],
 }
 
@@ -207,8 +219,17 @@ SKILLS = [
 
 
 def contains_keyword(text, keyword):
-    pattern = r"\b" + re.escape(keyword.lower()) + r"\b"
-    return re.search(pattern, text.lower()) is not None
+    text = text.lower()
+    keyword = keyword.lower()
+
+    # Word-boundary regex works well for English words,
+    # but it can fail on non-Latin text such as Chinese job titles.
+    # For non-ASCII keywords, use direct substring matching.
+    if not keyword.isascii():
+        return keyword in text
+
+    pattern = r"\b" + re.escape(keyword) + r"\b"
+    return re.search(pattern, text) is not None
 
 
 def get_snapshots():
