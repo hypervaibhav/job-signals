@@ -160,14 +160,26 @@ def save_jobs(jobs):
             description,
         ))
 
-    if seen_job_keys:
-        placeholders = ",".join("?" for _ in seen_job_keys)
-        c.execute(f"""
+    # Lifecycle tracking is time-based rather than scrape-based.
+    # This prevents false removals caused by pagination, sampling,
+    # API limits, or changing result windows.
+
+    # Snapshot consistency safeguard.
+    # Do not immediately deactivate jobs that disappear from a single scrape.
+    # Some sources return partial or rotating result sets.
+    # A job must be absent for at least one hour before being marked inactive.
+
+    stale_cutoff = snapshot_time - 3600
+
+    c.execute(
+        """
         UPDATE jobs
         SET active = 0
-        WHERE source IN ({','.join('?' for _ in set(job.get('source', '') for job in jobs))})
-        AND job_key NOT IN ({placeholders})
-        """, tuple(set(job.get("source", "") for job in jobs)) + tuple(seen_job_keys))
+        WHERE active = 1
+        AND last_seen < ?
+        """,
+        (stale_cutoff,),
+    )
 
     conn.commit()
     conn.close()

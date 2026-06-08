@@ -109,6 +109,47 @@ def scrape_remoteok():
         return []
 
 
+def scrape_greenhouse():
+    print("Using Greenhouse API...")
+
+    boards = [
+        "stripe",
+        "reddit",
+        "canva",
+        "datadog",
+        "discord",
+    ]
+
+    jobs = []
+
+    for board in boards:
+        url = f"https://boards-api.greenhouse.io/v1/boards/{board}/jobs"
+
+        try:
+            res = requests.get(url, timeout=10)
+
+            if res.status_code != 200:
+                continue
+
+            data = res.json()
+
+            for job in data.get("jobs", [])[:10]:
+                jobs.append(
+                    {
+                        "title": job.get("title", "N/A"),
+                        "company": board.title(),
+                        "source": "greenhouse",
+                        "external_id": str(job.get("id", "")),
+                        "description": "",
+                    }
+                )
+
+        except Exception as e:
+            print(f"Greenhouse error ({board}):", e)
+
+    return jobs
+
+
 def generate_signals(jobs):
     print("\n--- SIGNALS ---\n")
 
@@ -132,6 +173,7 @@ if __name__ == "__main__":
     jobs = []
     jobs.extend(scrape_remotive())
     jobs.extend(scrape_remoteok())
+    jobs.extend(scrape_greenhouse())
 
     print("\n--- JOBS FOUND ---\n")
 

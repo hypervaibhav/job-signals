@@ -25,7 +25,7 @@ The goal is to discover hiring, technology, and skill signals before they become
 
 Current Status
 
-Version: v0
+Version: v0.2
 
 Repository Status:
 
@@ -35,7 +35,7 @@ Repository Status:
 
 Latest Commit:
 
-* build v0 labor market signal engine
+* normalize signals in daily report
 
 ⸻
 
@@ -50,8 +50,9 @@ Active Sources:
 
 Planned Sources:
 
-* Additional job boards
-* Additional hiring datasets
+* Greenhouse
+* Lever
+* Ashby
 * Company career pages
 
 ⸻
@@ -72,6 +73,8 @@ Stores:
 * Historical snapshots
 * Skill signals
 * Category signals
+* job_snapshots
+* Historical signal snapshots
 
 ⸻
 
@@ -113,7 +116,7 @@ Current Categories:
 
 Category quality improved:
 
-* Other reduced from roughly 35% to roughly 2.5%
+* Other reduced from roughly 35% to roughly 7.5%
 
 ⸻
 
@@ -125,6 +128,8 @@ Implemented:
 * Skill frequency tracking
 * Skill momentum tracking
 * Company diversity tracking
+* Signal taxonomy normalization
+* Cross-skill signal grouping
 
 Tracked Skills Include:
 
@@ -142,6 +147,42 @@ Tracked Skills Include:
 * HubSpot
 * SEO
 * Excel
+
+Signal Taxonomy
+
+Implemented:
+
+* signal_taxonomy.py
+* Skill normalization
+* Signal grouping
+
+Current Signal Groups:
+
+* AI
+* AI Infrastructure
+* Frontend
+* Backend
+* Cloud / DevOps
+* Data
+* CRM / Sales Tools
+* Marketing / Growth
+
+Purpose:
+
+Convert raw skills into durable market signals.
+
+Examples:
+
+AI:
+* ai
+* llm
+* machine learning
+* langchain
+
+Frontend:
+* react
+* typescript
+* javascript
 
 ⸻
 
@@ -202,7 +243,9 @@ Reporting
 Implemented:
 
 * trends.py
+* daily_report.py
 * leaderboard.py
+* signal_taxonomy.py
 * signal_history.py
 * category_debug.py
 * skill_debug.py
@@ -215,6 +258,9 @@ Outputs:
 * Emerging technology scores
 * Historical signals
 * Leaderboards
+* Daily intelligence reports
+* Signal strength rankings
+* Normalized signal leaders
 
 ⸻
 
@@ -235,6 +281,12 @@ trends.py
 leaderboard.py
 
 * Snapshot rankings
+
+signal_taxonomy.py
+
+* Signal normalization
+* Signal grouping
+* Market signal vocabulary
 
 signal_history.py
 
@@ -258,12 +310,13 @@ Current Insights
 
 Most recent observations:
 
-* AI is the strongest multi-company signal.
-* MCP appears frequently but is concentrated.
-* Salesforce is emerging.
-* Python is emerging.
-* Company momentum tracking works.
-* Category system is largely stabilized.
+* AI is currently the strongest broad market signal.
+* Frontend remains the highest-volume technical signal.
+* AI Infrastructure appears frequently but remains concentrated.
+* Salesforce and HubSpot show cross-company presence.
+* Company diversity scoring is functioning.
+* Category classification improved significantly.
+* Other category reduced from roughly 35% to roughly 7.5%.
 
 ⸻
 
@@ -279,7 +332,7 @@ Priority 2:
 
 Priority 3:
 
-* Build daily intelligence report
+* Improve narrative intelligence reporting
 
 Priority 4:
 
@@ -291,47 +344,35 @@ Priority 5:
 
 Next Session Plan
 
-Priority 1: Job Deduplication
-
-Problem:
-
-* Same jobs can appear in multiple snapshots.
-* Historical analysis can become distorted.
-* Future trend calculations may overcount demand.
-
-Goal:
-
-* Identify jobs using source + external id when available.
-* Fall back to source + title + company.
-* Prevent duplicate storage.
-* Track first_seen and last_seen timestamps.
-
-Priority 2: New vs Existing Job Detection
-
-Goal:
-
-* Detect newly appeared jobs.
-* Detect jobs that disappeared.
-* Calculate net hiring change.
-
-Expected Output:
-
-* New jobs today
-* Removed jobs today
-* Net job change
-
-Priority 3: Third Data Source
+Priority 1: Third Data Source
 
 Candidates:
 
 * Greenhouse
 * Lever
 * Ashby
-* Wellfound
 
 Reason:
 
-* Improve signal quality and reduce dependence on Remotive/RemoteOK.
+* Improve signal quality.
+* Reduce dependence on job boards.
+* Move closer to company hiring signals.
+
+Priority 2: Narrative Intelligence Layer
+
+Goal:
+
+* Explain signal movement.
+* Identify meaningful changes.
+* Surface emerging themes automatically.
+
+Priority 3: Long-Term Trend Tracking
+
+Goal:
+
+* Track company momentum over time.
+* Track signal persistence.
+* Improve forecasting capability.
 
 Completed:
 - Job identity layer
@@ -339,16 +380,18 @@ Completed:
 - first_seen tracking
 - last_seen tracking
 - active/inactive tracking
-
-Database verified:
-- 40 active jobs
-- 40 unique jobs
-- duplicate storage eliminated
+- Historical snapshot architecture
+- Job lifecycle tracking
+- Daily intelligence report
+- Signal taxonomy
+- Normalized signal leaderboard
+- Normalized daily report
 
 Current Focus:
-- New job detection
-- Removed job detection
-- Net hiring change
+- Narrative intelligence layer
+- Signal quality improvements
+- Third data source integration
+- Long-term company trend tracking
 
 ⸻
 
