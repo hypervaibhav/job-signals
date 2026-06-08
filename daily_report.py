@@ -31,14 +31,14 @@ def get_latest_two_snapshots():
     latest_time, previous_time = times[0], times[1]
 
     c.execute("""
-        SELECT title, company, snapshot_time, description
+        SELECT title, company, snapshot_time, description, source
         FROM job_snapshots
         WHERE snapshot_time = ?
     """, (latest_time,))
     latest = c.fetchall()
 
     c.execute("""
-        SELECT title, company, snapshot_time, description
+        SELECT title, company, snapshot_time, description, source
         FROM job_snapshots
         WHERE snapshot_time = ?
     """, (previous_time,))
@@ -82,6 +82,9 @@ def calculate_normalized_skill_companies(rows):
             signal_companies.setdefault(signal, set()).add(company)
 
     return signal_companies
+
+def calculate_source_mix(rows):
+    return Counter(row[4] if len(row) > 4 else "unknown" for row in rows)
 
 
 def calculate_report_confidence(net_change, latest_jobs, previous_jobs):
@@ -189,6 +192,9 @@ def print_daily_report():
 
     latest_skill_companies = calculate_normalized_skill_companies(latest)
 
+    latest_source_mix = calculate_source_mix(latest)
+    previous_source_mix = calculate_source_mix(previous)
+
     print("\n==============================")
     print("JOB SIGNALS DAILY REPORT")
     print("==============================\n")
@@ -201,6 +207,15 @@ def print_daily_report():
     print(f"Latest jobs: {len(latest)}")
     print(f"Previous jobs: {len(previous)}")
     print(f"Net job change: {net_change:+}")
+
+    print("\n--- SOURCE MIX ---\n")
+    total_latest_sources = sum(latest_source_mix.values())
+
+    for source, count in latest_source_mix.most_common():
+        percentage = (count / total_latest_sources) * 100 if total_latest_sources else 0
+        previous_count = previous_source_mix.get(source, 0)
+        diff = count - previous_count
+        print(f"{source}: {count} jobs ({percentage:.1f}%) ({diff:+})")
 
     print("\n--- CATEGORY MOVEMENT ---\n")
     all_categories = set(latest_categories) | set(previous_categories)
