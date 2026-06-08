@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+*.db
+jobs_old_backup.db
