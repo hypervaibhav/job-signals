@@ -84,9 +84,41 @@ def calculate_normalized_skill_companies(rows):
     return signal_companies
 
 
+def calculate_report_confidence(net_change, latest_jobs, previous_jobs):
+    if previous_jobs == 0:
+        return "LOW", "Insufficient history"
+
+    growth_ratio = abs(net_change) / max(previous_jobs, 1)
+
+    if growth_ratio > 0.25:
+        return (
+            "LOW",
+            "Large snapshot change detected. Results may be influenced by source expansion or sampling effects.",
+        )
+
+    if growth_ratio > 0.10:
+        return (
+            "MEDIUM",
+            "Moderate snapshot change detected. Interpret directional signals carefully.",
+        )
+
+    return (
+        "HIGH",
+        "Snapshot size is stable. Signal comparisons are more reliable.",
+    )
+
 # --- MARKET NARRATIVE ---
 def print_market_narrative(net_change, category_changes, company_changes, skill_changes):
     print("\n--- MARKET NARRATIVE ---\n")
+
+    confidence, reason = calculate_report_confidence(
+        net_change,
+        sum(x[1] for x in category_changes),
+        sum(max(0, x[1] - x[2]) for x in category_changes),
+    )
+
+    print(f"Confidence: {confidence}")
+    print(f"Reason: {reason}\n")
 
     if net_change > 0:
         print(f"Market direction: expanding (+{net_change} net jobs).")
@@ -101,7 +133,11 @@ def print_market_narrative(net_change, category_changes, company_changes, skill_
     if strongest_signals:
         signal, count, diff, companies, score = strongest_signals[0]
         print(
-            f"Strongest signal: {signal} appears in {count} postings "
+            f"AI" if signal == "AI" else f"{signal}",
+            end="",
+        )
+        print(
+            f" remains the strongest signal, appearing in {count} postings "
             f"across {companies} companies (strength {score})."
         )
 
@@ -119,7 +155,9 @@ def print_market_narrative(net_change, category_changes, company_changes, skill_
 
     if growing_companies:
         company, count, diff = growing_companies[0]
-        print(f"Top company movement: {company} increased by {diff} postings.")
+        print(
+            f"Company momentum leader: {company} increased by {diff} postings."
+        )
     else:
         print("Company movement: no company showed clear positive movement.")
 
@@ -129,7 +167,7 @@ def print_market_narrative(net_change, category_changes, company_changes, skill_
         signal, count, diff, companies, score = broad_signals[0]
         print(
             f"Broad demand note: {signal} is spread across {companies} companies, "
-            "making it more meaningful than a single-company spike."
+            "which is generally more meaningful than demand concentrated in a single employer."
         )
 
 
