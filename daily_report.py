@@ -5,8 +5,9 @@ from datetime import datetime
 from trends import (
     classify_role,
     extract_skills,
-    calculate_skill_companies,
 )
+
+from signal_taxonomy import normalize_signal
 
 DB_NAME = "jobs.db"
 
@@ -51,6 +52,37 @@ def fmt_time(ts):
     return datetime.fromtimestamp(int(ts)).strftime("%Y-%m-%d %I:%M %p")
 
 
+# Helper: normalized skill counts
+def calculate_normalized_skill_counts(rows):
+    skill_counts = Counter()
+
+    for row in rows:
+        title = row[0]
+        description = row[3] or ""
+
+        for skill in extract_skills(title, description):
+            signal = normalize_signal(skill)
+            skill_counts[signal] += 1
+
+    return skill_counts
+
+
+# Helper: normalized skill companies
+def calculate_normalized_skill_companies(rows):
+    signal_companies = {}
+
+    for row in rows:
+        title = row[0]
+        company = row[1]
+        description = row[3] or ""
+
+        for skill in extract_skills(title, description):
+            signal = normalize_signal(skill)
+            signal_companies.setdefault(signal, set()).add(company)
+
+    return signal_companies
+
+
 def print_daily_report():
     latest_time, previous_time, latest, previous = get_latest_two_snapshots()
 
@@ -64,18 +96,10 @@ def print_daily_report():
     latest_companies = Counter(row[1] for row in latest)
     previous_companies = Counter(row[1] for row in previous)
 
-    latest_skills = Counter(
-        skill
-        for row in latest
-        for skill in extract_skills(row[0], row[3] or "")
-    )
-    previous_skills = Counter(
-        skill
-        for row in previous
-        for skill in extract_skills(row[0], row[3] or "")
-    )
+    latest_skills = calculate_normalized_skill_counts(latest)
+    previous_skills = calculate_normalized_skill_counts(previous)
 
-    latest_skill_companies = calculate_skill_companies(latest)
+    latest_skill_companies = calculate_normalized_skill_companies(latest)
 
     print("\n==============================")
     print("JOB SIGNALS DAILY REPORT")
@@ -116,14 +140,14 @@ def print_daily_report():
     for company, count, diff in company_changes[:10]:
         print(f"{company}: {count} postings ({diff:+})")
 
-    print("\n--- SKILL SIGNALS ---\n")
+    print("\n--- SIGNAL LEADERS ---\n")
     all_skills = set(latest_skills) | set(previous_skills)
 
     skill_changes = []
     for skill in all_skills:
         diff = latest_skills[skill] - previous_skills[skill]
         companies = len(latest_skill_companies.get(skill, set()))
-        score = diff * companies
+        score = latest_skills[skill] * companies
         skill_changes.append((skill, latest_skills[skill], diff, companies, score))
 
     skill_changes.sort(key=lambda x: x[4], reverse=True)
@@ -131,7 +155,7 @@ def print_daily_report():
     for skill, count, diff, companies, score in skill_changes[:10]:
         print(
             f"{skill}: {count} postings ({diff:+}), "
-            f"{companies} companies, score {score}"
+            f"{companies} companies, signal strength {score}"
         )
 
     print("\n--- QUICK READ ---\n")
@@ -146,9 +170,9 @@ def print_daily_report():
         print("Top category movement: none detected")
 
     if growing_skills:
-        print(f"Top skill movement: {growing_skills[0][0]} ({growing_skills[0][2]:+})")
+        print(f"Top signal movement: {growing_skills[0][0]} ({growing_skills[0][2]:+})")
     else:
-        print("Top skill movement: none detected")
+        print("Top signal movement: none detected")
 
     if growing_companies:
         print(f"Top company movement: {growing_companies[0][0]} ({growing_companies[0][2]:+})")
