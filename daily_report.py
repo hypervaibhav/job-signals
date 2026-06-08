@@ -91,6 +91,14 @@ def calculate_normalized_skill_companies(rows):
 def calculate_source_mix(rows):
     return Counter(row[4] if len(row) > 4 else "unknown" for row in rows)
 
+def calculate_conviction(count, company_count):
+    if count >= 10 and company_count >= 5:
+        return "HIGH"
+
+    if count >= 5 and company_count >= 2:
+        return "MEDIUM"
+
+    return "LOW"
 
 def calculate_report_confidence(
     net_change,
@@ -162,14 +170,11 @@ def print_market_narrative(net_change, category_changes, company_changes, skill_
     strongest_signals.sort(key=lambda row: row[4], reverse=True)
 
     if strongest_signals:
-        signal, count, diff, companies, score = strongest_signals[0]
+        signal, count, diff, companies, score, conviction = strongest_signals[0]
         print(
-            f"AI" if signal == "AI" else f"{signal}",
-            end="",
-        )
-        print(
-            f" remains the strongest signal, appearing in {count} postings "
-            f"across {companies} companies (strength {score})."
+            f"{signal} remains the strongest {conviction}-conviction signal, "
+            f"appearing in {count} postings across {companies} companies "
+            f"(strength {score})."
         )
 
     growing_categories = [row for row in category_changes if row[2] > 0]
@@ -195,10 +200,11 @@ def print_market_narrative(net_change, category_changes, company_changes, skill_
     broad_signals = [row for row in strongest_signals if row[3] >= 3]
 
     if broad_signals:
-        signal, count, diff, companies, score = broad_signals[0]
+        signal, count, diff, companies, score, conviction = broad_signals[0]
         print(
-            f"Broad demand note: {signal} is spread across {companies} companies, "
-            "which is generally more meaningful than demand concentrated in a single employer."
+            f"Broad demand note: {signal} has {conviction} conviction and is spread "
+            f"across {companies} companies, which is generally more meaningful "
+            "than demand concentrated in a single employer."
         )
 
 
@@ -289,14 +295,18 @@ def print_daily_report():
         diff = latest_skills[skill] - previous_skills[skill]
         companies = len(latest_skill_companies.get(skill, set()))
         score = latest_skills[skill] * companies
-        skill_changes.append((skill, latest_skills[skill], diff, companies, score))
+        conviction = calculate_conviction(latest_skills[skill], companies)
+        skill_changes.append(
+            (skill, latest_skills[skill], diff, companies, score, conviction)
+        )
 
     skill_changes.sort(key=lambda x: x[4], reverse=True)
 
-    for skill, count, diff, companies, score in skill_changes[:10]:
+    for skill, count, diff, companies, score, conviction in skill_changes[:10]:
         print(
             f"{skill}: {count} postings ({diff:+}), "
-            f"{companies} companies, signal strength {score}"
+            f"{companies} companies, signal strength {score}, "
+            f"{conviction} conviction"
         )
 
     print_market_narrative(net_change, category_changes, company_changes, skill_changes)
