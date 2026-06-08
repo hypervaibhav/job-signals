@@ -25,7 +25,7 @@ The goal is to discover hiring, technology, and skill signals before they become
 
 Current Status
 
-Version: v0.3
+Version: v0.4
 
 Repository Status:
 
@@ -36,6 +36,7 @@ Repository Status:
 Latest Commit:
 
 * add lever source and snapshot context memory
+* add signal acceleration analysis
 
 ⸻
 
@@ -76,6 +77,7 @@ Stores:
 * job_snapshots
 * Historical signal snapshots
 * snapshot_metadata
+* skill signal history
 * Job lifecycle history
 
 ⸻
@@ -252,6 +254,7 @@ Implemented:
 * category_debug.py
 * skill_debug.py
 * snapshot context memory
+* signal acceleration analysis
 
 Outputs:
 
@@ -264,6 +267,7 @@ Outputs:
 * Daily intelligence reports
 * Signal strength rankings
 * Normalized signal leaders
+* Signal acceleration rankings
 
 ⸻
 
@@ -319,6 +323,11 @@ Current Insights
 * Snapshot context memory can distinguish signal growth from source expansion.
 * Category classification quality continues to improve.
 * Other category reduced substantially from early project levels.
+* Signal acceleration now identifies momentum rather than only signal size.
+* Backend, Data, AI, and Cloud / DevOps currently show the strongest acceleration.
+* Tiny-sample acceleration noise is filtered out.
+* Source-expansion events are considered when evaluating signal momentum.
+* Signal growth can now be distinguished from source-expansion artifacts.
 
 ⸻
 
@@ -326,20 +335,21 @@ Current Priorities
 
 Priority 1:
 
-* Improve signal quality
-* Reduce remaining Other classifications
-* Improve classification accuracy
+* Signal conviction scoring
+* Distinguish broad market demand from concentrated demand
+* Improve confidence in emerging signals
 
 Priority 2:
 
-* Long-term company trend tracking
-* Signal persistence tracking
-* Forecasting foundations
+* Company trend intelligence
+* Hiring persistence tracking
+* Company watchlists
 
 Priority 3:
 
-* Narrative intelligence improvements
-* Better automated market explanations
+* Geographic intelligence
+* Regional hiring trends
+* Location-based signal analysis
 
 Priority 4:
 
@@ -370,6 +380,10 @@ Completed
 * Source mix reporting
 * Confidence scoring
 * Snapshot context memory
+* Signal memory
+* Signal acceleration
+* Source expansion detection
+* Source-aware baseline filtering
 
 ⸻
 
@@ -385,39 +399,29 @@ Current Focus
 
 Next Session Plan
 
-Priority 1: Signal Quality
+Priority 1: Signal Conviction Score
 
 Goals:
 
-* Reduce Other category further
-* Improve role classification
-* Improve signal accuracy
+* Rank signals by quality, not just volume
+* Incorporate company diversity
+* Surface high-confidence market movements
 
-Priority 2: Ashby Integration
-
-Goals:
-
-* Add Ashby company feeds
-* Increase direct-company hiring coverage
-* Improve source diversity
-
-Priority 3: Company Trend Intelligence
+Priority 2: Company Watchlists
 
 Goals:
 
-* Track company momentum over time
-* Track hiring persistence
-* Identify durable hiring trends
+* Track strategic companies over time
+* Measure hiring concentration
+* Compare AI hiring across companies
 
-Priority 4: Narrative Intelligence
+Priority 3: Geographic Intelligence
 
 Goals:
 
-* Explain signal movement automatically
-* Surface meaningful market changes
-* Improve daily report quality
-
-⸻
+* Extract location trends
+* Compare regional demand patterns
+* Build geographic signal layers
 
 Long-Term Vision
 
