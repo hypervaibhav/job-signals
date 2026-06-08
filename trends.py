@@ -175,7 +175,7 @@ def get_snapshots():
 
     c.execute("""
         SELECT title, company, snapshot_time, description
-        FROM jobs
+        FROM job_snapshots
         ORDER BY snapshot_time DESC
     """)
 
@@ -288,6 +288,63 @@ def format_snapshot_time(snapshot_time):
     return datetime.fromtimestamp(int(snapshot_time)).strftime("%Y-%m-%d %I:%M:%S %p")
 
 
+# Print job lifecycle summary for the latest snapshot
+def print_job_lifecycle_summary(latest_time):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+
+    c.execute("SELECT COUNT(*) FROM jobs WHERE first_seen = ?", (latest_time,))
+    new_jobs = c.fetchone()[0]
+
+    c.execute("SELECT COUNT(*) FROM jobs WHERE active = 1")
+    active_jobs = c.fetchone()[0]
+
+    c.execute("SELECT COUNT(*) FROM jobs WHERE active = 0")
+    removed_jobs = c.fetchone()[0]
+
+    net_change = new_jobs - removed_jobs
+
+    c.execute("""
+        SELECT title, company, source
+        FROM jobs
+        WHERE first_seen = ?
+        ORDER BY company, title
+        LIMIT 10
+    """, (latest_time,))
+    newest_rows = c.fetchall()
+
+    c.execute("""
+        SELECT title, company, source
+        FROM jobs
+        WHERE active = 0
+        ORDER BY last_seen DESC
+        LIMIT 10
+    """)
+    removed_rows = c.fetchall()
+
+    conn.close()
+
+    print("\n--- JOB LIFECYCLE ---\n")
+    print(f"New jobs this snapshot: {new_jobs}")
+    print(f"Removed jobs: {removed_jobs}")
+    print(f"Active jobs: {active_jobs}")
+    print(f"Net change: {net_change:+}")
+
+    if newest_rows:
+        print("\nNewest jobs:")
+        for title, company, source in newest_rows:
+            print(f"+ {title} — {company} [{source}]")
+    else:
+        print("\nNewest jobs: none detected in latest snapshot")
+
+    if removed_rows:
+        print("\nRecently removed jobs:")
+        for title, company, source in removed_rows:
+            print(f"- {title} — {company} [{source}]")
+    else:
+        print("Recently removed jobs: none detected yet")
+
+
 def compare_latest_snapshots():
     data = get_snapshots()
 
@@ -314,6 +371,7 @@ def compare_latest_snapshots():
     print("\n--- CATEGORY TREND SIGNALS ---\n")
     print(f"Latest snapshot: {format_snapshot_time(latest_time)}")
     print(f"Previous snapshot: {format_snapshot_time(previous_time)}\n")
+    print_job_lifecycle_summary(latest_time)
 
     all_categories = set(list(latest_categories.keys()) + list(previous_categories.keys()))
     latest_total = sum(latest_categories.values())
