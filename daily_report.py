@@ -100,6 +100,75 @@ def calculate_conviction(count, company_count):
 
     return "LOW"
 
+def get_signal_examples(rows, target_signal, limit=3):
+    companies = Counter()
+    roles = Counter()
+
+    for row in rows:
+        title = row[0]
+        company = row[1]
+        description = row[3] or ""
+
+        normalized_signals = {
+            normalize_signal(skill)
+            for skill in extract_skills(title, description)
+        }
+
+        if target_signal in normalized_signals:
+            companies[company] += 1
+            roles[title] += 1
+
+    return companies.most_common(limit), roles.most_common(limit)
+
+def print_signal_opportunities(latest_rows, skill_changes, limit=3):
+    print("\n--- SIGNAL OPPORTUNITIES ---\n")
+
+    opportunity_rows = [
+        row for row in skill_changes
+        if row[5] in {"HIGH", "MEDIUM"}
+    ]
+
+    opportunity_rows.sort(key=lambda row: (row[5] == "HIGH", row[4]), reverse=True)
+
+    if not opportunity_rows:
+        print("No strong signal opportunities detected yet.")
+        return
+
+    for signal, count, diff, companies, score, conviction in opportunity_rows[:limit]:
+        representative_companies, representative_roles = get_signal_examples(
+            latest_rows,
+            signal,
+        )
+
+        print(f"{signal}")
+        print(f"Conviction: {conviction}")
+        print(f"Postings: {count}")
+        print(f"Companies: {companies}")
+        print(f"Signal strength: {score}")
+
+        if representative_companies:
+            print("Representative companies:")
+            for company, _ in representative_companies:
+                print(f"- {company}")
+
+        if representative_roles:
+            print("Representative roles:")
+            for role, _ in representative_roles:
+                print(f"- {role}")
+
+        if conviction == "HIGH":
+            print(
+                "Why it matters: this signal is broad enough across companies "
+                "to be treated as a meaningful market opportunity."
+            )
+        else:
+            print(
+                "Why it matters: this signal is visible, but still needs more "
+                "breadth before it should be treated as a core market trend."
+            )
+
+        print("")
+
 def calculate_report_confidence(
     net_change,
     latest_jobs,
@@ -310,6 +379,7 @@ def print_daily_report():
         )
 
     print_market_narrative(net_change, category_changes, company_changes, skill_changes)
+    print_signal_opportunities(latest, skill_changes)
 
     print("\n--- QUICK READ ---\n")
 
