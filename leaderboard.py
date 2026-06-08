@@ -1,13 +1,10 @@
-import re
 import sqlite3
 from datetime import datetime
 
+from trends import extract_skills
+from signal_taxonomy import normalize_signal, normalize_skill_counts
+
 DB_NAME = "jobs.db"
-
-
-def contains_keyword(text, keyword):
-    pattern = r"\b" + re.escape(keyword.lower()) + r"\b"
-    return re.search(pattern, text.lower()) is not None
 
 
 def format_snapshot_time(snapshot_time):
@@ -51,7 +48,7 @@ def get_skill_company_counts(snapshot_time):
     c.execute(
         '''
         SELECT title, company, description
-        FROM jobs
+        FROM job_snapshots
         WHERE snapshot_time = ?
         ''',
         (snapshot_time,),
@@ -60,29 +57,26 @@ def get_skill_company_counts(snapshot_time):
     rows = c.fetchall()
     conn.close()
 
-    skill_companies = {}
-
-    skills = [
-        "ai",
-        "artificial intelligence",
-        "llm",
-        "mcp",
-        "react",
-        "typescript",
-        "aws",
-        "seo",
-        "hubspot",
-        "excel",
-    ]
+    signal_companies = {}
 
     for title, company, description in rows:
-        text = f"{title} {description or ''}".lower()
+        for skill in extract_skills(title, description or ""):
+            signal = normalize_signal(skill)
+            signal_companies.setdefault(signal, set()).add(company)
 
-        for skill in skills:
-            if contains_keyword(text, skill):
-                skill_companies.setdefault(skill, set()).add(company)
+    return {signal: len(companies) for signal, companies in signal_companies.items()}
 
-    return {skill: len(companies) for skill, companies in skill_companies.items()}
+
+def calculate_signal_scores(rows, company_counts=None):
+    scored_rows = []
+
+    for label, count in rows:
+        company_count = company_counts.get(label, 1) if company_counts else 1
+        score = count * company_count
+        scored_rows.append((label, count, company_count, score))
+
+    scored_rows.sort(key=lambda row: row[3], reverse=True)
+    return scored_rows
 
 
 def print_leaderboard(title, rows, company_counts=None):
@@ -93,18 +87,19 @@ def print_leaderboard(title, rows, company_counts=None):
         return
 
     total = sum(count for _, count in rows)
+    scored_rows = calculate_signal_scores(rows, company_counts)
 
-    for rank, (label, count) in enumerate(rows, start=1):
+    for rank, (label, count, company_count, score) in enumerate(scored_rows, start=1):
         percentage = (count / total) * 100 if total else 0
 
-        if company_counts and label in company_counts:
-            company_count = company_counts[label]
+        if company_counts:
             company_word = "company" if company_count == 1 else "companies"
             print(
-                f"{rank}. {label}: {count} ({percentage:.1f}%) | {company_count} {company_word}"
+                f"{rank}. {label}: {count} postings ({percentage:.1f}%) | "
+                f"{company_count} {company_word} | score {score}"
             )
         else:
-            print(f"{rank}. {label}: {count} ({percentage:.1f}%)")
+            print(f"{rank}. {label}: {count} postings ({percentage:.1f}%) | score {score}")
 
 
 def main():
@@ -122,9 +117,11 @@ def main():
 
     if skill_time is not None:
         print(f"\nLatest skill snapshot: {format_snapshot_time(skill_time)}")
-        skill_rows = get_leaderboard("skill_signals", "skill", skill_time)
+        raw_skill_rows = get_leaderboard("skill_signals", "skill", skill_time)
+        normalized_skill_counts = normalize_skill_counts(dict(raw_skill_rows))
+        skill_rows = list(normalized_skill_counts.items())
         company_counts = get_skill_company_counts(skill_time)
-        print_leaderboard("SKILL LEADERBOARD", skill_rows, company_counts)
+        print_leaderboard("SIGNAL LEADERBOARD", skill_rows, company_counts)
 
 
 if __name__ == "__main__":
