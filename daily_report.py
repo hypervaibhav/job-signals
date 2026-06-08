@@ -68,6 +68,7 @@ def calculate_normalized_skill_counts(rows):
 
 
 # Helper: normalized skill companies
+
 def calculate_normalized_skill_companies(rows):
     signal_companies = {}
 
@@ -81,6 +82,55 @@ def calculate_normalized_skill_companies(rows):
             signal_companies.setdefault(signal, set()).add(company)
 
     return signal_companies
+
+
+# --- MARKET NARRATIVE ---
+def print_market_narrative(net_change, category_changes, company_changes, skill_changes):
+    print("\n--- MARKET NARRATIVE ---\n")
+
+    if net_change > 0:
+        print(f"Market direction: expanding (+{net_change} net jobs).")
+    elif net_change < 0:
+        print(f"Market direction: contracting ({net_change} net jobs).")
+    else:
+        print("Market direction: flat between the latest two snapshots.")
+
+    strongest_signals = [row for row in skill_changes if row[1] > 0]
+    strongest_signals.sort(key=lambda row: row[4], reverse=True)
+
+    if strongest_signals:
+        signal, count, diff, companies, score = strongest_signals[0]
+        print(
+            f"Strongest signal: {signal} appears in {count} postings "
+            f"across {companies} companies (strength {score})."
+        )
+
+    growing_categories = [row for row in category_changes if row[2] > 0]
+    growing_categories.sort(key=lambda row: row[2], reverse=True)
+
+    if growing_categories:
+        category, count, diff = growing_categories[0]
+        print(f"Fastest category movement: {category} increased by {diff} roles.")
+    else:
+        print("Category movement: no meaningful category increase detected.")
+
+    growing_companies = [row for row in company_changes if row[2] > 0]
+    growing_companies.sort(key=lambda row: row[2], reverse=True)
+
+    if growing_companies:
+        company, count, diff = growing_companies[0]
+        print(f"Top company movement: {company} increased by {diff} postings.")
+    else:
+        print("Company movement: no company showed clear positive movement.")
+
+    broad_signals = [row for row in strongest_signals if row[3] >= 3]
+
+    if broad_signals:
+        signal, count, diff, companies, score = broad_signals[0]
+        print(
+            f"Broad demand note: {signal} is spread across {companies} companies, "
+            "making it more meaningful than a single-company spike."
+        )
 
 
 def print_daily_report():
@@ -157,6 +207,8 @@ def print_daily_report():
             f"{skill}: {count} postings ({diff:+}), "
             f"{companies} companies, signal strength {score}"
         )
+
+    print_market_narrative(net_change, category_changes, company_changes, skill_changes)
 
     print("\n--- QUICK READ ---\n")
 
