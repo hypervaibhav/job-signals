@@ -25,7 +25,7 @@ The goal is to discover hiring, technology, and skill signals before they become
 
 Current Status
 
-Version: v0.2
+Version: v0.3
 
 Repository Status:
 
@@ -35,7 +35,7 @@ Repository Status:
 
 Latest Commit:
 
-* normalize signals in daily report
+* add lever source and snapshot context memory
 
 ⸻
 
@@ -47,11 +47,11 @@ Active Sources:
 
 * Remotive
 * RemoteOK
+* Greenhouse
+* Lever
 
 Planned Sources:
 
-* Greenhouse
-* Lever
 * Ashby
 * Company career pages
 
@@ -75,6 +75,8 @@ Stores:
 * Category signals
 * job_snapshots
 * Historical signal snapshots
+* snapshot_metadata
+* Job lifecycle history
 
 ⸻
 
@@ -249,6 +251,7 @@ Implemented:
 * signal_history.py
 * category_debug.py
 * skill_debug.py
+* snapshot context memory
 
 Outputs:
 
@@ -308,15 +311,14 @@ skill_debug.py
 
 Current Insights
 
-Most recent observations:
-
-* AI is currently the strongest broad market signal.
-* Frontend remains the highest-volume technical signal.
-* AI Infrastructure appears frequently but remains concentrated.
-* Salesforce and HubSpot show cross-company presence.
-* Company diversity scoring is functioning.
-* Category classification improved significantly.
-* Other category reduced from roughly 35% to roughly 7.5%.
+* AI remains the strongest broad-market signal.
+* Lever integration significantly expanded market coverage and improved signal diversity.
+* AI demand is spread across 15 companies.
+* Engineering is the strongest category by volume.
+* Source-aware confidence scoring is functioning.
+* Snapshot context memory can distinguish signal growth from source expansion.
+* Category classification quality continues to improve.
+* Other category reduced substantially from early project levels.
 
 ⸻
 
@@ -324,74 +326,96 @@ Current Priorities
 
 Priority 1:
 
-* Add third data source
+* Improve signal quality
+* Reduce remaining Other classifications
+* Improve classification accuracy
 
 Priority 2:
 
-* Improve company trend history
+* Long-term company trend tracking
+* Signal persistence tracking
+* Forecasting foundations
 
 Priority 3:
 
-* Improve narrative intelligence reporting
+* Narrative intelligence improvements
+* Better automated market explanations
 
 Priority 4:
 
-* Improve distribution
+* Ashby integration
+* Additional ATS coverage
 
 Priority 5:
 
-* Explore monetization
+* Distribution and monetization
+
+⸻
+
+Completed
+
+* Job identity layer
+* Deduplication system
+* first_seen tracking
+* last_seen tracking
+* active/inactive tracking
+* Historical snapshot architecture
+* Job lifecycle tracking
+* Daily intelligence report
+* Signal taxonomy
+* Normalized signal leaderboard
+* Normalized daily report
+* Greenhouse integration
+* Lever integration
+* Source mix reporting
+* Confidence scoring
+* Snapshot context memory
+
+⸻
+
+Current Focus
+
+* Signal quality improvements
+* Narrative intelligence layer
+* Company trend intelligence
+* Ashby integration
+* Forecasting and trend persistence
+
+⸻
 
 Next Session Plan
 
-Priority 1: Third Data Source
+Priority 1: Signal Quality
 
-Candidates:
+Goals:
 
-* Greenhouse
-* Lever
-* Ashby
+* Reduce Other category further
+* Improve role classification
+* Improve signal accuracy
 
-Reason:
+Priority 2: Ashby Integration
 
-* Improve signal quality.
-* Reduce dependence on job boards.
-* Move closer to company hiring signals.
+Goals:
 
-Priority 2: Narrative Intelligence Layer
+* Add Ashby company feeds
+* Increase direct-company hiring coverage
+* Improve source diversity
 
-Goal:
+Priority 3: Company Trend Intelligence
 
-* Explain signal movement.
-* Identify meaningful changes.
-* Surface emerging themes automatically.
+Goals:
 
-Priority 3: Long-Term Trend Tracking
+* Track company momentum over time
+* Track hiring persistence
+* Identify durable hiring trends
 
-Goal:
+Priority 4: Narrative Intelligence
 
-* Track company momentum over time.
-* Track signal persistence.
-* Improve forecasting capability.
+Goals:
 
-Completed:
-- Job identity layer
-- Deduplication system
-- first_seen tracking
-- last_seen tracking
-- active/inactive tracking
-- Historical snapshot architecture
-- Job lifecycle tracking
-- Daily intelligence report
-- Signal taxonomy
-- Normalized signal leaderboard
-- Normalized daily report
-
-Current Focus:
-- Narrative intelligence layer
-- Signal quality improvements
-- Third data source integration
-- Long-term company trend tracking
+* Explain signal movement automatically
+* Surface meaningful market changes
+* Improve daily report quality
 
 ⸻
 
