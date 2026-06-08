@@ -37,6 +37,9 @@ Latest Commit:
 
 * add lever source and snapshot context memory
 * add signal acceleration analysis
+* add normalized opportunity ranking
+* add category conviction scoring
+* add signal opportunity intelligence layer
 
 ⸻
 
@@ -255,6 +258,10 @@ Implemented:
 * skill_debug.py
 * snapshot context memory
 * signal acceleration analysis
+* opportunity ranking
+* conviction scoring
+* signal opportunity summaries
+* normalized opportunity scoring
 
 Outputs:
 
@@ -268,6 +275,10 @@ Outputs:
 * Signal strength rankings
 * Normalized signal leaders
 * Signal acceleration rankings
+* Opportunity rankings
+* Conviction-ranked signals
+* Signal opportunity analysis
+* Market opportunity summaries
 
 ⸻
 
@@ -328,6 +339,11 @@ Current Insights
 * Tiny-sample acceleration noise is filtered out.
 * Source-expansion events are considered when evaluating signal momentum.
 * Signal growth can now be distinguished from source-expansion artifacts.
+* Opportunity scoring now combines signal size, company diversity, conviction, and momentum.
+* AI currently ranks as the strongest market opportunity signal.
+* Frontend, Cloud / DevOps, Backend, and Data remain secondary opportunity clusters.
+* Conviction scoring helps distinguish broad market demand from isolated hiring noise.
+* Category conviction now incorporates company diversity rather than raw posting count alone.
 
 ⸻
 
@@ -384,6 +400,11 @@ Completed
 * Signal acceleration
 * Source expansion detection
 * Source-aware baseline filtering
+* Opportunity ranking system
+* Normalized opportunity scoring (0-100)
+* Category conviction scoring
+* Signal opportunity intelligence layer
+* Company diversity weighted rankings
 
 ⸻
 
@@ -392,6 +413,9 @@ Current Focus
 * Signal quality improvements
 * Narrative intelligence layer
 * Company trend intelligence
+* Opportunity score refinement
+* Company watchlists
+* Signal persistence tracking
 * Ashby integration
 * Forecasting and trend persistence
 
@@ -399,29 +423,30 @@ Current Focus
 
 Next Session Plan
 
-Priority 1: Signal Conviction Score
-
-Goals:
-
-* Rank signals by quality, not just volume
-* Incorporate company diversity
-* Surface high-confidence market movements
-
-Priority 2: Company Watchlists
+Priority 1: Company Watchlists
 
 Goals:
 
 * Track strategic companies over time
-* Measure hiring concentration
-* Compare AI hiring across companies
+* Detect hiring persistence
+* Monitor AI hiring concentration
+* Identify repeat hiring leaders
 
-Priority 3: Geographic Intelligence
+Priority 2: Geographic Intelligence
 
 Goals:
 
 * Extract location trends
 * Compare regional demand patterns
 * Build geographic signal layers
+
+Priority 3: Trend Persistence
+
+Goals:
+
+* Measure how long signals remain strong
+* Detect temporary spikes versus durable trends
+* Improve forecasting quality
 
 Long-Term Vision
 
