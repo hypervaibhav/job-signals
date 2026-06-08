@@ -16,6 +16,18 @@ CURRENT_PREVIOUS_JOBS = 0
 CURRENT_LATEST_SOURCE_MIX = {}
 CURRENT_PREVIOUS_SOURCE_MIX = {}
 
+WATCHLIST_COMPANIES = [
+    "Mistral",
+    "Datadog",
+    "Stripe",
+    "Reddit",
+    "Discord",
+    "Spotify",
+    "Levelai",
+    "Ryzlabs",
+    "Integrate",
+]
+
 
 def get_latest_two_snapshots():
     conn = sqlite3.connect(DB_NAME)
@@ -145,6 +157,85 @@ def get_signal_examples(rows, target_signal, limit=3):
             roles[title] += 1
 
     return companies.most_common(limit), roles.most_common(limit)
+
+
+def calculate_company_watchlist(rows):
+    watchlist = {}
+
+    for company_name in WATCHLIST_COMPANIES:
+        company_rows = [row for row in rows if row[1] == company_name]
+
+        if not company_rows:
+            continue
+
+        ai_postings = 0
+
+        for row in company_rows:
+            title = row[0]
+            description = row[3] or ""
+
+            normalized_signals = {
+                normalize_signal(skill)
+                for skill in extract_skills(title, description)
+            }
+
+            if "AI" in normalized_signals:
+                ai_postings += 1
+
+        total_postings = len(company_rows)
+        ai_concentration = (
+            (ai_postings / total_postings) * 100
+            if total_postings
+            else 0
+        )
+
+        watchlist[company_name] = {
+            "total_postings": total_postings,
+            "ai_postings": ai_postings,
+            "ai_concentration": ai_concentration,
+        }
+
+    return watchlist
+
+
+def print_company_watchlist(rows):
+    print("\n--- COMPANY WATCHLIST ---\n")
+
+    watchlist = calculate_company_watchlist(rows)
+
+    if not watchlist:
+        print("No watchlist companies found in latest snapshot.")
+        return
+
+    ranked_companies = sorted(
+        watchlist.items(),
+        key=lambda item: (item[1]["ai_concentration"], item[1]["total_postings"]),
+        reverse=True,
+    )
+
+    for company, stats in ranked_companies:
+        print(company)
+        print(f"Postings: {stats['total_postings']}")
+        print(f"AI-related postings: {stats['ai_postings']}")
+        print(f"AI concentration: {stats['ai_concentration']:.1f}%")
+        print("")
+
+    high_ai_companies = [
+        company
+        for company, stats in ranked_companies
+        if stats["ai_concentration"] >= 50 and stats["ai_postings"] >= 3
+    ]
+
+    if high_ai_companies:
+        print(
+            "Watchlist observation: "
+            + ", ".join(high_ai_companies[:3])
+            + " show strong AI hiring concentration."
+        )
+    else:
+        print(
+            "Watchlist observation: no watchlist company shows strong AI hiring concentration yet."
+        )
 
 def print_opportunity_ranking(skill_changes, limit=10):
     print("\n--- OPPORTUNITY RANKING ---\n")
@@ -444,6 +535,7 @@ def print_daily_report():
     print_market_narrative(net_change, category_changes, company_changes, skill_changes)
     print_opportunity_ranking(skill_changes)
     print_signal_opportunities(latest, skill_changes)
+    print_company_watchlist(latest)
 
     print("\n--- QUICK READ ---\n")
 
