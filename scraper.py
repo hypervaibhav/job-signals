@@ -149,6 +149,51 @@ def scrape_greenhouse():
 
     return jobs
 
+def scrape_lever():
+    print("Using Lever API...")
+
+    companies = [
+        "spotify",
+        "levelai",
+        "RyzLabs",
+        "alluxio",
+        "integrate",
+        "mistral",
+        "jobandtalent",
+        "Mediafly",
+    ]
+
+    jobs = []
+
+    for company in companies:
+        print(f"Checking Lever company: {company}")
+        url = f"https://api.lever.co/v0/postings/{company}?mode=json"
+
+        try:
+            res = requests.get(url, timeout=20)
+
+            if res.status_code != 200:
+                print(f"Lever status ({company}): {res.status_code}")
+                continue
+
+            data = res.json()
+            print(f"Lever jobs ({company}): {len(data)}")
+
+            for job in data[:10]:
+                jobs.append(
+                    {
+                        "title": job.get("text", "N/A"),
+                        "company": company.title(),
+                        "source": "lever",
+                        "external_id": str(job.get("id", "")),
+                        "description": job.get("descriptionPlain", ""),
+                    }
+                )
+
+        except Exception as e:
+            print(f"Lever error ({company}):", e)
+
+    return jobs
 
 def generate_signals(jobs):
     print("\n--- SIGNALS ---\n")
@@ -174,6 +219,7 @@ if __name__ == "__main__":
     jobs.extend(scrape_remotive())
     jobs.extend(scrape_remoteok())
     jobs.extend(scrape_greenhouse())
+    jobs.extend(scrape_lever())
 
     print("\n--- JOBS FOUND ---\n")
 

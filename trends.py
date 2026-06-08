@@ -216,7 +216,7 @@ def get_snapshots():
     c = conn.cursor()
 
     c.execute("""
-        SELECT title, company, snapshot_time, description
+        SELECT title, company, snapshot_time, description, source
         FROM job_snapshots
         ORDER BY snapshot_time DESC
     """)
@@ -228,7 +228,13 @@ def get_snapshots():
 
 
 # Save signals to dedicated tables
-def save_signal_snapshot(snapshot_time, latest_categories, latest_skills):
+def save_signal_snapshot(
+    snapshot_time,
+    latest_categories,
+    latest_skills,
+    total_jobs,
+    source_count,
+):
     conn = sqlite3.connect(DB_NAME)
     c = conn.cursor()
 
@@ -252,6 +258,16 @@ def save_signal_snapshot(snapshot_time, latest_categories, latest_skills):
         '''
     )
 
+    c.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS snapshot_metadata (
+            snapshot_time INTEGER PRIMARY KEY,
+            total_jobs INTEGER,
+            source_count INTEGER
+        )
+        '''
+    )
+
     c.execute("DELETE FROM category_signals WHERE snapshot_time = ?", (snapshot_time,))
     c.execute("DELETE FROM skill_signals WHERE snapshot_time = ?", (snapshot_time,))
 
@@ -266,6 +282,15 @@ def save_signal_snapshot(snapshot_time, latest_categories, latest_skills):
             "INSERT INTO skill_signals VALUES (?, ?, ?)",
             (snapshot_time, skill, count),
         )
+
+    c.execute(
+        '''
+        INSERT OR REPLACE INTO snapshot_metadata
+        (snapshot_time, total_jobs, source_count)
+        VALUES (?, ?, ?)
+        ''',
+        (snapshot_time, total_jobs, source_count),
+    )
 
     conn.commit()
     conn.close()
@@ -355,6 +380,23 @@ def print_signal_memory(limit=5):
     """, tuple(snapshot_times))
 
     rows = c.fetchall()
+
+    c.execute(f"""
+        SELECT snapshot_time, total_jobs
+        FROM snapshot_metadata
+        WHERE snapshot_time IN ({placeholders})
+    """, tuple(snapshot_times))
+
+    metadata_rows = c.fetchall()
+
+    c.execute(f"""
+        SELECT snapshot_time, COUNT(*)
+        FROM job_snapshots
+        WHERE snapshot_time IN ({placeholders})
+        GROUP BY snapshot_time
+    """, tuple(snapshot_times))
+
+    snapshot_size_rows = c.fetchall()
     conn.close()
 
     signal_history = {}
@@ -365,6 +407,11 @@ def print_signal_memory(limit=5):
         signal_history[signal][snapshot_time] = signal_history[signal].get(snapshot_time, 0) + count
 
     ordered_times = sorted(snapshot_times)
+
+    snapshot_sizes = {ts: total_jobs for ts, total_jobs in metadata_rows}
+
+    for snapshot_time, total_jobs in snapshot_size_rows:
+        snapshot_sizes.setdefault(snapshot_time, total_jobs)
 
     print("\n--- SIGNAL MEMORY ---\n")
 
@@ -393,7 +440,33 @@ def print_signal_memory(limit=5):
             direction = "stable"
 
         count_path = " → ".join(str(count) for count in counts)
+
+        contexts = []
+        previous_size = None
+
+        for snapshot_time in ordered_times:
+            current_size = snapshot_sizes.get(snapshot_time)
+
+            if previous_size is None:
+                contexts.append("NORMAL")
+            elif current_size is None or previous_size is None:
+                contexts.append("UNKNOWN")
+            else:
+                growth = current_size - previous_size
+
+                if growth > 25:
+                    contexts.append("SOURCE_EXPANSION")
+                elif growth < -25:
+                    contexts.append("SOURCE_CONTRACTION")
+                else:
+                    contexts.append("NORMAL")
+
+            previous_size = current_size
+
+        context_path = " → ".join(contexts)
+
         print(f"{signal}: {count_path} | {direction} ({change:+})")
+        print(f"    Context: {context_path}")
 
 
 def format_snapshot_time(snapshot_time):
@@ -551,10 +624,14 @@ def compare_latest_snapshots():
     )
     latest_skill_companies = calculate_skill_companies(latest)
 
+    latest_sources = set(row[4] for row in latest)
+
     save_signal_snapshot(
         latest_time,
         latest_categories,
         latest_skills,
+        len(latest),
+        len(latest_sources),
     )
 
     print("\n--- SKILL SIGNALS ---\n")
