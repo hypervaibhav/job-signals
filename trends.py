@@ -73,6 +73,7 @@ CATEGORIES = {
     "Engineering": [
         "software",
         "engineer",
+        "engineering",
         "developer",
         "backend",
         "front end",
@@ -112,6 +113,13 @@ CATEGORIES = {
         "business development",
         "revenue",
         "partnerships",
+        "account manager",
+        "account executive",
+        "client account manager",
+        "commercial hunter",
+        "enterprise hunter",
+        "enterprise grower",
+        "business value manager",
     ],
     "Marketing": [
         "marketing",
@@ -130,9 +138,17 @@ CATEGORIES = {
         "help desk",
         "technical support",
         "customer service",
+        "customer experience",
         "atención al cliente",
         "atencion al cliente",
         "cliente",
+    ],
+    "Legal": [
+        "legal",
+        "counsel",
+        "attorney",
+        "lawyer",
+        "compliance",
     ],
     "Operations": [
         "operations",
@@ -146,6 +162,9 @@ CATEGORIES = {
         "project manager",
         "implementation specialist",
         "delivery services",
+        "partnerships manager",
+        "developer solutions",
+        "director of product communications",
     ],
 }
 
