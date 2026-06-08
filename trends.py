@@ -490,6 +490,131 @@ def print_signal_memory(limit=5):
         print(f"    Context: {context_path}")
 
 
+# --- SIGNAL ACCELERATION ---
+def print_signal_acceleration(limit=5):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+
+    c.execute("""
+        SELECT DISTINCT snapshot_time
+        FROM skill_signals
+        ORDER BY snapshot_time DESC
+        LIMIT ?
+    """, (limit,))
+
+    snapshot_times = [row[0] for row in c.fetchall()]
+
+    if len(snapshot_times) < 3:
+        conn.close()
+        print("\n--- SIGNAL ACCELERATION ---\n")
+        print("Need at least 3 saved signal snapshots for acceleration.")
+        return
+
+    placeholders = ",".join("?" for _ in snapshot_times)
+
+    c.execute(f"""
+        SELECT snapshot_time, skill, count
+        FROM skill_signals
+        WHERE snapshot_time IN ({placeholders})
+    """, tuple(snapshot_times))
+
+    rows = c.fetchall()
+
+    c.execute(f"""
+        SELECT snapshot_time, COUNT(*)
+        FROM job_snapshots
+        WHERE snapshot_time IN ({placeholders})
+        GROUP BY snapshot_time
+    """, tuple(snapshot_times))
+
+    snapshot_size_rows = c.fetchall()
+    conn.close()
+
+    ordered_times = sorted(snapshot_times)
+    snapshot_sizes = {snapshot_time: total for snapshot_time, total in snapshot_size_rows}
+
+    signal_history = {}
+
+    for snapshot_time, skill, count in rows:
+        signal = normalize_signal(skill)
+        signal_history.setdefault(signal, {})
+        signal_history[signal][snapshot_time] = signal_history[signal].get(snapshot_time, 0) + count
+
+    print("\n--- SIGNAL ACCELERATION ---\n")
+
+    acceleration_rows = []
+
+    for signal, history in signal_history.items():
+        counts = [history.get(snapshot_time, 0) for snapshot_time in ordered_times]
+        current = counts[-1]
+        previous_counts = counts[:-1]
+
+        # Exclude source-expansion snapshots from the baseline when possible.
+        filtered_counts = []
+
+        for i, value in enumerate(previous_counts):
+            if i == 0:
+                filtered_counts.append(value)
+                continue
+
+            current_size = snapshot_sizes.get(ordered_times[i], 0)
+            previous_size_for_snapshot = snapshot_sizes.get(ordered_times[i - 1], 0)
+
+            if current_size - previous_size_for_snapshot > 25:
+                continue
+
+            filtered_counts.append(value)
+
+        baseline_values = filtered_counts if filtered_counts else previous_counts
+        baseline = (
+            sum(baseline_values) / len(baseline_values)
+            if baseline_values
+            else 0
+        )
+
+        # Ignore tiny sample sizes because percentage acceleration
+        # becomes misleading (for example 0.5 -> 1 = +100%).
+        if current < 5:
+            continue
+
+        if current == 0 or baseline == 0:
+            continue
+
+        acceleration = ((current - baseline) / baseline) * 100
+
+        latest_size = snapshot_sizes.get(ordered_times[-1], 0)
+        previous_size = snapshot_sizes.get(ordered_times[-2], 0)
+        source_context = "NORMAL"
+
+        if latest_size - previous_size > 25:
+            source_context = "SOURCE_EXPANSION"
+        elif latest_size - previous_size < -25:
+            source_context = "SOURCE_CONTRACTION"
+
+        acceleration_rows.append(
+            (signal, current, baseline, acceleration, source_context)
+        )
+
+    acceleration_rows.sort(key=lambda row: abs(row[3]), reverse=True)
+
+    if not acceleration_rows:
+        print("No acceleration signals detected yet.")
+        return
+
+    for signal, current, baseline, acceleration, source_context in acceleration_rows[:10]:
+        if acceleration > 0:
+            direction = "accelerating"
+        elif acceleration < 0:
+            direction = "decelerating"
+        else:
+            direction = "flat"
+
+        print(
+            f"{signal}: current {current}, baseline {baseline:.1f}, "
+            f"acceleration {acceleration:+.1f}% | {direction} | context {source_context}"
+        )
+
+
 def format_snapshot_time(snapshot_time):
     return datetime.fromtimestamp(int(snapshot_time)).strftime("%Y-%m-%d %I:%M:%S %p")
 
@@ -682,6 +807,7 @@ def compare_latest_snapshots():
 
     print_emerging_technology_score(growing_skills, latest_skill_companies)
     print_signal_memory()
+    print_signal_acceleration()
     print("\n--- SIGNAL DATABASE ---\n")
     print("Category signals saved to: category_signals")
     print("Skill signals saved to: skill_signals")
