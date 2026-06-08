@@ -1,7 +1,7 @@
 import sqlite3
 from datetime import datetime
 
-from trends import extract_skills
+from trends import classify_role, extract_skills
 from signal_taxonomy import normalize_signal, normalize_skill_counts
 
 DB_NAME = "jobs.db"
@@ -39,6 +39,34 @@ def get_leaderboard(table_name, label_column, snapshot_time):
     rows = c.fetchall()
     conn.close()
     return rows
+
+
+def get_category_company_counts(snapshot_time):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+
+    c.execute(
+        '''
+        SELECT title, company
+        FROM job_snapshots
+        WHERE snapshot_time = ?
+        ''',
+        (snapshot_time,),
+    )
+
+    rows = c.fetchall()
+    conn.close()
+
+    category_companies = {}
+
+    for title, company in rows:
+        category = classify_role(title)
+        category_companies.setdefault(category, set()).add(company)
+
+    return {
+        category: len(companies)
+        for category, companies in category_companies.items()
+    }
 
 
 def get_skill_company_counts(snapshot_time):
@@ -79,6 +107,16 @@ def calculate_signal_scores(rows, company_counts=None):
     return scored_rows
 
 
+def calculate_conviction(count, company_count):
+    if count >= 10 and company_count >= 5:
+        return "HIGH"
+
+    if count >= 5 and company_count >= 2:
+        return "MEDIUM"
+
+    return "LOW"
+
+
 def print_leaderboard(title, rows, company_counts=None):
     print(f"\n--- {title} ---\n")
 
@@ -90,16 +128,21 @@ def print_leaderboard(title, rows, company_counts=None):
     scored_rows = calculate_signal_scores(rows, company_counts)
 
     for rank, (label, count, company_count, score) in enumerate(scored_rows, start=1):
+        conviction = calculate_conviction(count, company_count)
         percentage = (count / total) * 100 if total else 0
 
         if company_counts:
             company_word = "company" if company_count == 1 else "companies"
             print(
                 f"{rank}. {label}: {count} postings ({percentage:.1f}%) | "
-                f"{company_count} {company_word} | score {score}"
+                f"{company_count} {company_word} | score {score} | "
+                f"{conviction} conviction"
             )
         else:
-            print(f"{rank}. {label}: {count} postings ({percentage:.1f}%) | score {score}")
+            print(
+                f"{rank}. {label}: {count} postings ({percentage:.1f}%) | "
+                f"score {score} | {conviction} conviction"
+            )
 
 
 def main():
@@ -113,7 +156,12 @@ def main():
     if category_time is not None:
         print(f"Latest category snapshot: {format_snapshot_time(category_time)}")
         category_rows = get_leaderboard("category_signals", "category", category_time)
-        print_leaderboard("CATEGORY LEADERBOARD", category_rows)
+        category_company_counts = get_category_company_counts(category_time)
+        print_leaderboard(
+            "CATEGORY LEADERBOARD",
+            category_rows,
+            category_company_counts,
+        )
 
     if skill_time is not None:
         print(f"\nLatest skill snapshot: {format_snapshot_time(skill_time)}")
