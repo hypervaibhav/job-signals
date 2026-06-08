@@ -100,6 +100,16 @@ def calculate_conviction(count, company_count):
 
     return "LOW"
 
+# --- OPPORTUNITY SCORE ---
+def calculate_opportunity_score(score, conviction):
+    conviction_bonus = {
+        "HIGH": 100,
+        "MEDIUM": 40,
+        "LOW": 0,
+    }
+
+    return score + conviction_bonus.get(conviction, 0)
+
 def get_signal_examples(rows, target_signal, limit=3):
     companies = Counter()
     roles = Counter()
@@ -119,6 +129,32 @@ def get_signal_examples(rows, target_signal, limit=3):
             roles[title] += 1
 
     return companies.most_common(limit), roles.most_common(limit)
+
+def print_opportunity_ranking(skill_changes, limit=10):
+    print("\n--- OPPORTUNITY RANKING ---\n")
+
+    ranked = []
+
+    for signal, count, diff, companies, score, conviction in skill_changes:
+        opportunity_score = calculate_opportunity_score(score, conviction)
+
+        ranked.append(
+            (
+                signal,
+                opportunity_score,
+                conviction,
+                count,
+                companies,
+            )
+        )
+
+    ranked.sort(key=lambda row: row[1], reverse=True)
+
+    for rank, (signal, opportunity_score, conviction, count, companies) in enumerate(ranked[:limit], start=1):
+        print(
+            f"{rank}. {signal}: opportunity score {opportunity_score} | "
+            f"{conviction} conviction | {count} postings | {companies} companies"
+        )
 
 def print_signal_opportunities(latest_rows, skill_changes, limit=3):
     print("\n--- SIGNAL OPPORTUNITIES ---\n")
@@ -379,6 +415,7 @@ def print_daily_report():
         )
 
     print_market_narrative(net_change, category_changes, company_changes, skill_changes)
+    print_opportunity_ranking(skill_changes)
     print_signal_opportunities(latest, skill_changes)
 
     print("\n--- QUICK READ ---\n")
