@@ -17,6 +17,8 @@ from company_intelligence import (
     extract_skills as company_extract_skills,
 )
 
+from strategic_themes import detect_strategic_themes
+
 DB_NAME = "jobs.db"
 
 CURRENT_LATEST_JOBS = 0
@@ -247,14 +249,12 @@ def print_company_watchlist(rows):
 
 
 # --- COMPANY INTELLIGENCE HIGHLIGHTS ---
-def print_company_intelligence_highlights(rows, limit=3):
-    print("\n--- COMPANY INTELLIGENCE HIGHLIGHTS ---\n")
 
+def calculate_company_intelligence_rows(rows):
     watchlist = calculate_company_watchlist(rows)
 
     if not watchlist:
-        print("No company intelligence available.")
-        return
+        return []
 
     ranked_companies = sorted(
         watchlist.items(),
@@ -265,7 +265,9 @@ def print_company_intelligence_highlights(rows, limit=3):
         reverse=True,
     )
 
-    for company_name, stats in ranked_companies[:limit]:
+    intelligence_rows = []
+
+    for company_name, stats in ranked_companies:
         company_rows = [row for row in rows if row[1] == company_name]
 
         category_counts = Counter(
@@ -344,13 +346,57 @@ def print_company_intelligence_highlights(rows, limit=3):
             archetype,
         )
 
-        print(company_name)
-        print(f"Archetype: {archetype}")
-        print(f"AI concentration: {stats['ai_concentration']:.1f}%")
-        print(f"Postings: {stats['total_postings']}")
-        print(f"Persistence: {persistence} snapshots")
-        print(f"Conviction: {conviction}")
-        print(f"Narrative: {narrative}")
+        intelligence_rows.append(
+            {
+                "company": company_name,
+                "intelligence": archetype,
+                "ai_concentration": stats["ai_concentration"],
+                "total_postings": stats["total_postings"],
+                "persistence": persistence,
+                "conviction": conviction,
+                "narrative": narrative,
+            }
+        )
+
+    return intelligence_rows
+
+
+def print_strategic_themes(company_intelligence_rows, limit=5):
+    print("\n--- STRATEGIC THEMES ---\n")
+
+    themes = detect_strategic_themes(company_intelligence_rows)
+
+    if not themes:
+        print("No broad strategic themes detected yet.")
+        return
+
+    for theme in themes[:limit]:
+        print(theme["theme"])
+        print(f"Strength: {theme['strength']}")
+        print(f"Companies: {theme['company_count']}")
+        print("Representative companies:")
+        for company in theme["companies"][:5]:
+            print(f"- {company}")
+        print(f"Interpretation: {theme['narrative']}")
+        print("")
+
+
+def print_company_intelligence_highlights(company_intelligence_rows, limit=3):
+    print("\n--- COMPANY INTELLIGENCE HIGHLIGHTS ---\n")
+
+    if not company_intelligence_rows:
+        print("No company intelligence available.")
+        return
+
+    for row in company_intelligence_rows[:limit]:
+        print(row["company"])
+        print(f"Archetype: {row['intelligence']}")
+        print(f"AI concentration: {row['ai_concentration']:.1f}%")
+        print(f"Postings: {row['total_postings']}")
+        snapshot_label = "snapshot" if row["persistence"] == 1 else "snapshots"
+        print(f"Persistence: {row['persistence']} {snapshot_label}")
+        print(f"Conviction: {row['conviction']}")
+        print(f"Narrative: {row['narrative']}")
         print("")
 
 def print_opportunity_ranking(skill_changes, limit=10):
@@ -650,9 +696,13 @@ def print_daily_report():
 
     print_market_narrative(net_change, category_changes, company_changes, skill_changes)
     print_opportunity_ranking(skill_changes)
+
+    company_intelligence_rows = calculate_company_intelligence_rows(latest)
+
     print_signal_opportunities(latest, skill_changes)
     print_company_watchlist(latest)
-    print_company_intelligence_highlights(latest)
+    print_strategic_themes(company_intelligence_rows)
+    print_company_intelligence_highlights(company_intelligence_rows)
 
     print("\n--- QUICK READ ---\n")
 
