@@ -12,13 +12,12 @@ from signal_taxonomy import normalize_signal
 from company_intelligence import (
     detect_hiring_archetype,
     generate_narrative as generate_company_narrative,
-    get_company_rows,
     classify_role as company_classify_role,
     extract_skills as company_extract_skills,
 )
 
 from strategic_themes import detect_strategic_themes
-from company_history import get_company_histories
+from company_history import get_company_histories, get_company_history
 
 DB_NAME = "jobs.db"
 
@@ -313,21 +312,13 @@ def calculate_company_intelligence_rows(rows):
         )
         top_skills = skill_counts.most_common(5)
 
-        historical_rows = get_company_rows(company_name)
-        historical_snapshots = sorted(set(row[4] for row in historical_rows))
-        persistence = len(historical_snapshots)
+        history = get_company_history(company_name)
 
-        if persistence >= 2:
-            latest_snapshot = historical_snapshots[-1]
-            first_snapshot = historical_snapshots[0]
-            latest_count = len(
-                [row for row in historical_rows if row[4] == latest_snapshot]
-            )
-            first_count = len(
-                [row for row in historical_rows if row[4] == first_snapshot]
-            )
-            momentum = latest_count - first_count
+        if history:
+            persistence = history["snapshots_active"]
+            momentum = history["current_postings"] - history["peak_postings"]
         else:
+            persistence = 1
             momentum = 0
 
         if stats["total_postings"] >= 10 and persistence >= 3:
