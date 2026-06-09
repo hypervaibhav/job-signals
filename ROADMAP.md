@@ -1,19 +1,18 @@
-
-
 # Job Signals - Roadmap
 
 ## NOW
 
-### Company Intelligence v2
+### Historical Company Trends
 
 Goal:
-Improve company-level interpretation quality.
+Detect how company hiring behavior evolves over time.
 
 Focus:
-- Stronger company narratives
-- Better archetype explanations
-- Higher signal-to-noise ratio
-- More actionable intelligence summaries
+- Expanding companies
+- Stable companies
+- Contracting companies
+- Trend classification
+- Trend-aware narratives
 
 ---
 
@@ -48,31 +47,13 @@ Focus:
 
 ## NEXT
 
-### Company History Layer
-
-Purpose:
-Create company memory.
-
-Future Features:
-- First seen
-- Active snapshots
-- Persistence scoring
-- Company timelines
-
-Status:
-Architecture approved.
-
-Implementation deferred until more historical data accumulates.
-
----
-
 ### Company Trend Intelligence
 
 Examples:
+- Expanding
+- Stable
+- Contracting
 - Emerging
-- Persistent
-- Reappearing
-- Dormant
 
 Status:
 Deferred.
@@ -152,6 +133,10 @@ Completed:
 - AI Product Expansion detection
 - AI Research Expansion detection
 - Company intelligence highlights
+- Company memory layer
+- Historical persistence tracking
+- Observation window tracking
+- Single-source persistence architecture
 
 ---
 

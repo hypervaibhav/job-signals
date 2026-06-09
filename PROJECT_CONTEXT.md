@@ -70,17 +70,17 @@ The objective is to move up this ladder without becoming a job board.
 ## Current Focus
 
 Priority 1
+- Historical Company Trends
 - Company Intelligence v2
-- Strategic Theme Engine
 - Narrative Intelligence
 
 Priority 2
-- Company Persistence Tracking
-- Historical Company Memory Layer
+- Hiring Cluster Detection
+- Market Intelligence
 
 Priority 3
-- Market Intelligence
-- Emerging Hiring Cluster Detection
+- Strategic Theme Refinement
+- Company Similarity Analysis
 
 Not Prioritized Right Now
 - Dashboards
@@ -101,9 +101,36 @@ Not Prioritized Right Now
 - Added company watchlists
 
 2026-06-09
+- Added Company Memory layer
+- Added historical company persistence tracking
+- Added observation window tracking
+- Refactored persistence into a single-source architecture
+- Company history designated as the authoritative source for persistence metrics
 - Deferred full company trend intelligence
 - Reason: only 12 snapshots spanning ~14 hours
-- Focus shifted to Company Intelligence v2, Strategic Themes, Narrative Intelligence, and Persistence Analysis
+- Current history supports persistence analysis but not reliable trend forecasting
+
+---
+
+## Architecture Snapshot
+
+company_history.py
+- Owns company memory
+- Owns persistence metrics
+- Owns observation windows
+- Owns first/latest seen tracking
+
+company_intelligence.py
+- Owns hiring archetype detection
+- Owns conviction interpretation
+- Owns narrative generation
+
+daily_report.py
+- Owns report presentation
+- Consumes history and intelligence layers
+
+Design Rule:
+Company history is the authoritative source for persistence-related metrics.
 
 ---
 
