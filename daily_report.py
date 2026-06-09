@@ -18,6 +18,7 @@ from company_intelligence import (
 )
 
 from strategic_themes import detect_strategic_themes
+from company_history import get_company_histories
 
 DB_NAME = "jobs.db"
 
@@ -399,6 +400,43 @@ def print_company_intelligence_highlights(company_intelligence_rows, limit=3):
         print(f"Narrative: {row['narrative']}")
         print("")
 
+
+def print_company_memory(limit=5):
+    print("\n--- COMPANY MEMORY ---\n")
+
+    histories = get_company_histories()
+
+    if not histories:
+        print("No company history available yet.")
+        return
+
+    meaningful_histories = [
+        history for history in histories
+        if history["current_postings"] >= 3
+    ]
+
+    if not meaningful_histories:
+        print("No meaningful company memory available yet.")
+        return
+
+    for history in meaningful_histories[:limit]:
+        snapshot_label = (
+            "snapshot"
+            if history["snapshots_active"] == 1
+            else "snapshots"
+        )
+
+        print(history["company"])
+        print(
+            f"Persistence: {history['snapshots_active']}/"
+            f"{history['total_snapshots']} {snapshot_label}"
+        )
+        print(f"Current postings: {history['current_postings']}")
+        print(f"Peak postings: {history['peak_postings']}")
+        print(f"First seen: {history['first_seen_formatted']}")
+        print(f"Latest seen: {history['latest_seen_formatted']}")
+        print("")
+
 def print_opportunity_ranking(skill_changes, limit=10):
     print("\n--- OPPORTUNITY RANKING ---\n")
 
@@ -701,6 +739,7 @@ def print_daily_report():
 
     print_signal_opportunities(latest, skill_changes)
     print_company_watchlist(latest)
+    print_company_memory()
     print_strategic_themes(company_intelligence_rows)
     print_company_intelligence_highlights(company_intelligence_rows)
 
