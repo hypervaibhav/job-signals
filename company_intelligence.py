@@ -427,6 +427,7 @@ def build_company_report(company_name):
             top_category,
             top_skills,
             hiring_archetype,
+            observation_window_days=None,
         )
     )
 
@@ -439,6 +440,7 @@ def generate_narrative(
     top_category,
     top_skills,
     hiring_archetype,
+    observation_window_days=None,
 ):
     skill_text = (
         ", ".join(skill for skill, _ in top_skills[:3])
@@ -478,6 +480,12 @@ def generate_narrative(
     conviction_sentence = (
         f"Signal conviction is {conviction.lower()} based on observed posting volume and persistence."
     )
+
+    if observation_window_days is not None and observation_window_days < 7:
+        conviction_sentence += (
+            f" The observation window currently spans only {observation_window_days:.1f} days, "
+            "so long-term durability is not yet established."
+        )
 
     return (
         f"{opening} "

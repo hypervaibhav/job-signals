@@ -316,10 +316,12 @@ def calculate_company_intelligence_rows(rows):
 
         if history:
             persistence = history["snapshots_active"]
-            momentum = history["current_postings"] - history["peak_postings"]
+            momentum = history["current_postings"] - history["first_postings"]
+            observation_window_days = history["observation_window_days"]
         else:
             persistence = 1
             momentum = 0
+            observation_window_days = None
 
         if stats["total_postings"] >= 10 and persistence >= 3:
             conviction = "High"
@@ -336,7 +338,9 @@ def calculate_company_intelligence_rows(rows):
             top_category,
             top_skills,
             archetype,
+            observation_window_days=observation_window_days,
         )
+
 
         intelligence_rows.append(
             {
@@ -345,6 +349,7 @@ def calculate_company_intelligence_rows(rows):
                 "ai_concentration": stats["ai_concentration"],
                 "total_postings": stats["total_postings"],
                 "persistence": persistence,
+                "observation_window_days": observation_window_days,
                 "conviction": conviction,
                 "narrative": narrative,
             }
@@ -387,6 +392,8 @@ def print_company_intelligence_highlights(company_intelligence_rows, limit=3):
         print(f"Postings: {row['total_postings']}")
         snapshot_label = "snapshot" if row["persistence"] == 1 else "snapshots"
         print(f"Persistence: {row['persistence']} {snapshot_label}")
+        if row["observation_window_days"] is not None:
+            print(f"Observed for: {row['observation_window_days']:.1f} days")
         print(f"Conviction: {row['conviction']}")
         print(f"Narrative: {row['narrative']}")
         print("")

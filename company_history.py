@@ -62,7 +62,15 @@ def build_company_history(company, snapshot_counts, snapshot_times):
     total_snapshots = len(snapshot_times)
     snapshots_active = len(active_snapshots)
 
+    first_snapshot = active_snapshots[0]
     latest_snapshot = snapshot_times[-1] if snapshot_times else None
+    latest_active_snapshot = active_snapshots[-1]
+
+    observation_window_seconds = int(latest_active_snapshot) - int(first_snapshot)
+    observation_window_hours = observation_window_seconds / 3600
+    observation_window_days = observation_window_hours / 24
+
+    first_postings = company_timeline.get(first_snapshot, 0)
     current_postings = company_timeline.get(latest_snapshot, 0)
     peak_postings = max(company_timeline.values())
 
@@ -81,6 +89,9 @@ def build_company_history(company, snapshot_counts, snapshot_times):
         "snapshots_active": snapshots_active,
         "total_snapshots": total_snapshots,
         "persistence_score": persistence_score,
+        "observation_window_hours": observation_window_hours,
+        "observation_window_days": observation_window_days,
+        "first_postings": first_postings,
         "current_postings": current_postings,
         "peak_postings": peak_postings,
     }
