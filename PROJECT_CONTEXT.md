@@ -1,465 +1,124 @@
-Job Signals - Project Context
+# Job Signals - Project Context
 
-IMPORTANT:
+## Mission
 
-The purpose of this project is not to build a job board.
+Job Signals is a labor market intelligence platform.
 
-The purpose is to build a labor market intelligence asset that identifies hiring, skill, technology, and company signals before they become obvious and eventually monetizes those insights.
+The goal is not to build a job board.
 
-Project Purpose
+The goal is to infer company strategy, technology adoption, skill demand, and market direction from hiring behavior.
 
-Job Signals is being built as a labor market intelligence engine.
+---
 
-Primary motivation:
+## Project Thesis
 
-* User is pursuing PR in Canada.
-* If PR is unsuccessful, user may need to return to India.
-* User wants to build a digital asset that can continue generating value regardless of location.
-* Focus is on creating something useful, monetizable, and capable of producing market intelligence.
+Hiring behavior is an early indicator of company and market change.
 
-The goal is not merely to scrape jobs.
+Companies reveal future priorities through recruiting before those priorities appear in earnings calls, press releases, public narratives, or product announcements.
 
-The goal is to discover hiring, technology, and skill signals before they become obvious.
+Job Signals converts hiring activity into actionable intelligence.
 
-⸻
+---
 
-Current Status
+## Current Phase
 
-Version: v0.4
+Phase 1: Data Collection & Signal Detection
+Status: Complete
 
-Repository Status:
+Phase 2: Company & Market Intelligence
+Status: In Progress
 
-* Git initialized
-* GitHub connected
-* First major checkpoint committed
+Future Phase: Predictive Intelligence
 
-Latest Commit:
+---
 
-* add lever source and snapshot context memory
-* add signal acceleration analysis
-* add normalized opportunity ranking
-* add category conviction scoring
-* add signal opportunity intelligence layer
+## Current Reality
 
-⸻
-
-Current Architecture
-
-Data Sources
-
-Active Sources:
-
-* Remotive
-* RemoteOK
-* Greenhouse
-* Lever
-
-Planned Sources:
-
-* Ashby
-* Company career pages
-
-⸻
-
-Storage
+Sources:
+- Lever
+- Greenhouse
+- Remotive
+- RemoteOK
 
 Database:
+- SQLite (jobs.db)
 
-* SQLite
+Historical Coverage:
+- 12 snapshots
+- ~14 hours of history
 
-Primary Database:
+Important:
+- Historical snapshot architecture exists.
+- Company history is technically possible.
+- Long-term trend intelligence is not yet reliable due to limited history.
+- Current history is best used for persistence analysis, not forecasting.
 
-* jobs.db
+---
 
-Stores:
+## North Star
 
-* Job postings
-* Historical snapshots
-* Skill signals
-* Category signals
-* job_snapshots
-* Historical signal snapshots
-* snapshot_metadata
-* skill signal history
-* Job lifecycle history
+Jobs
+→ Signals
+→ Company Intelligence
+→ Market Intelligence
+→ Predictive Intelligence
 
-⸻
+The objective is to move up this ladder without becoming a job board.
 
-Core Features
+---
 
-Job Collection
+## Current Focus
 
-Implemented:
+Priority 1
+- Company Intelligence v2
+- Strategic Theme Engine
+- Narrative Intelligence
 
-* Multi-source ingestion
-* Snapshot storage
-* Historical tracking
+Priority 2
+- Company Persistence Tracking
+- Historical Company Memory Layer
 
-⸻
+Priority 3
+- Market Intelligence
+- Emerging Hiring Cluster Detection
 
-Category Intelligence
+Not Prioritized Right Now
+- Dashboards
+- Complex visualizations
+- Similarity graphs
+- UI work
+- Feature expansion without intelligence value
 
-Implemented:
+---
 
-* Category classification
-* Category momentum
-* Emerging category detection
+## Recent Decisions
 
-Current Categories:
+2026-06-08
+- Completed Company Intelligence v1
+- Added hiring archetypes
+- Added persistence-aware conviction
+- Added persistence-aware narratives
+- Added company watchlists
 
-* AI
-* Engineering
-* Data / Analytics
-* Product
-* Sales
-* Marketing
-* Support
-* Operations
-* People / HR
-* Admin / Executive
-* Education
-* Production / Labour
-* Healthcare
+2026-06-09
+- Deferred full company trend intelligence
+- Reason: only 12 snapshots spanning ~14 hours
+- Focus shifted to Company Intelligence v2, Strategic Themes, Narrative Intelligence, and Persistence Analysis
 
-Category quality improved:
+---
 
-* Other reduced from roughly 35% to roughly 7.5%
+## Success Criteria
 
-⸻
+Job Signals succeeds if it can identify:
 
-Skill Intelligence
+- Emerging technologies
+- Emerging skills
+- Company expansion signals
+- Talent demand shifts
+- Market direction changes
 
-Implemented:
+Before those developments become obvious to the broader market.
 
-* Skill extraction from descriptions
-* Skill frequency tracking
-* Skill momentum tracking
-* Company diversity tracking
-* Signal taxonomy normalization
-* Cross-skill signal grouping
+Ultimate Goal:
 
-Tracked Skills Include:
-
-* AI
-* LLM
-* MCP
-* React
-* TypeScript
-* AWS
-* Python
-* PostgreSQL
-* SQL
-* Git
-* Salesforce
-* HubSpot
-* SEO
-* Excel
-
-Signal Taxonomy
-
-Implemented:
-
-* signal_taxonomy.py
-* Skill normalization
-* Signal grouping
-
-Current Signal Groups:
-
-* AI
-* AI Infrastructure
-* Frontend
-* Backend
-* Cloud / DevOps
-* Data
-* CRM / Sales Tools
-* Marketing / Growth
-
-Purpose:
-
-Convert raw skills into durable market signals.
-
-Examples:
-
-AI:
-* ai
-* llm
-* machine learning
-* langchain
-
-Frontend:
-* react
-* typescript
-* javascript
-
-⸻
-
-Emerging Technology Score
-
-Formula:
-
-score = growth × company_diversity
-
-Purpose:
-
-Distinguish:
-
-* Broad market movement
-    from
-* Single-company hiring noise
-
-Example:
-
-AI:
-
-* Growth across multiple companies
-* High score
-
-MCP:
-
-* Strong growth
-* Concentrated in one company
-* Lower strategic importance
-
-⸻
-
-Company Intelligence
-
-Implemented:
-
-* Company hiring momentum
-
-Examples observed:
-
-* LawnStarter
-* TELUS Digital
-* KIPP Foundation
-* Dana Incorporated
-
-Purpose:
-
-Identify:
-
-* Expanding companies
-* Newly hiring companies
-* Stable major hirers
-
-⸻
-
-Reporting
-
-Implemented:
-
-* trends.py
-* daily_report.py
-* leaderboard.py
-* signal_taxonomy.py
-* signal_history.py
-* category_debug.py
-* skill_debug.py
-* snapshot context memory
-* signal acceleration analysis
-* opportunity ranking
-* conviction scoring
-* signal opportunity summaries
-* normalized opportunity scoring
-
-Outputs:
-
-* Category trends
-* Skill trends
-* Company momentum
-* Emerging technology scores
-* Historical signals
-* Leaderboards
-* Daily intelligence reports
-* Signal strength rankings
-* Normalized signal leaders
-* Signal acceleration rankings
-* Opportunity rankings
-* Conviction-ranked signals
-* Signal opportunity analysis
-* Market opportunity summaries
-
-⸻
-
-Main Files
-
-scraper.py
-
-* Collects jobs from external sources
-
-trends.py
-
-* Core intelligence engine
-* Categories
-* Skills
-* Momentum
-* Technology scoring
-
-leaderboard.py
-
-* Snapshot rankings
-
-signal_taxonomy.py
-
-* Signal normalization
-* Signal grouping
-* Market signal vocabulary
-
-signal_history.py
-
-* Historical trend tracking
-
-database.py
-
-* Database utilities
-
-category_debug.py
-
-* Category classification debugging
-
-skill_debug.py
-
-* Skill extraction debugging
-
-⸻
-
-Current Insights
-
-* AI remains the strongest broad-market signal.
-* Lever integration significantly expanded market coverage and improved signal diversity.
-* AI demand is spread across 15 companies.
-* Engineering is the strongest category by volume.
-* Source-aware confidence scoring is functioning.
-* Snapshot context memory can distinguish signal growth from source expansion.
-* Category classification quality continues to improve.
-* Other category reduced substantially from early project levels.
-* Signal acceleration now identifies momentum rather than only signal size.
-* Backend, Data, AI, and Cloud / DevOps currently show the strongest acceleration.
-* Tiny-sample acceleration noise is filtered out.
-* Source-expansion events are considered when evaluating signal momentum.
-* Signal growth can now be distinguished from source-expansion artifacts.
-* Opportunity scoring now combines signal size, company diversity, conviction, and momentum.
-* AI currently ranks as the strongest market opportunity signal.
-* Frontend, Cloud / DevOps, Backend, and Data remain secondary opportunity clusters.
-* Conviction scoring helps distinguish broad market demand from isolated hiring noise.
-* Category conviction now incorporates company diversity rather than raw posting count alone.
-
-⸻
-
-Current Priorities
-
-Priority 1:
-
-* Signal conviction scoring
-* Distinguish broad market demand from concentrated demand
-* Improve confidence in emerging signals
-
-Priority 2:
-
-* Company trend intelligence
-* Hiring persistence tracking
-* Company watchlists
-
-Priority 3:
-
-* Geographic intelligence
-* Regional hiring trends
-* Location-based signal analysis
-
-Priority 4:
-
-* Ashby integration
-* Additional ATS coverage
-
-Priority 5:
-
-* Distribution and monetization
-
-⸻
-
-Completed
-
-* Job identity layer
-* Deduplication system
-* first_seen tracking
-* last_seen tracking
-* active/inactive tracking
-* Historical snapshot architecture
-* Job lifecycle tracking
-* Daily intelligence report
-* Signal taxonomy
-* Normalized signal leaderboard
-* Normalized daily report
-* Greenhouse integration
-* Lever integration
-* Source mix reporting
-* Confidence scoring
-* Snapshot context memory
-* Signal memory
-* Signal acceleration
-* Source expansion detection
-* Source-aware baseline filtering
-* Opportunity ranking system
-* Normalized opportunity scoring (0-100)
-* Category conviction scoring
-* Signal opportunity intelligence layer
-* Company diversity weighted rankings
-
-⸻
-
-Current Focus
-
-* Signal quality improvements
-* Narrative intelligence layer
-* Company trend intelligence
-* Opportunity score refinement
-* Company watchlists
-* Signal persistence tracking
-* Ashby integration
-* Forecasting and trend persistence
-
-⸻
-
-Next Session Plan
-
-Priority 1: Company Watchlists
-
-Goals:
-
-* Track strategic companies over time
-* Detect hiring persistence
-* Monitor AI hiring concentration
-* Identify repeat hiring leaders
-
-Priority 2: Geographic Intelligence
-
-Goals:
-
-* Extract location trends
-* Compare regional demand patterns
-* Build geographic signal layers
-
-Priority 3: Trend Persistence
-
-Goals:
-
-* Measure how long signals remain strong
-* Detect temporary spikes versus durable trends
-* Improve forecasting quality
-
-Long-Term Vision
-
-Create a system that can identify:
-
-* Emerging technologies
-* Emerging skills
-* Hiring momentum
-* Company expansion
-* Talent demand shifts
-
-before they become obvious.
-
-Ultimate goal:
-
-Transform Job Signals into a valuable intelligence asset that produces useful market signals and can eventually generate revenue.
+Build a valuable labor market intelligence asset that can eventually be monetized.
