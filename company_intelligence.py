@@ -187,6 +187,14 @@ def extract_skills(title, description=""):
 
 def detect_hiring_archetype(category_counts, skill_counts, representative_roles, latest_count):
     role_text = " ".join(representative_roles).lower()
+    research_role_count = sum(
+        1
+        for role in representative_roles
+        if any(
+            term in role.lower()
+            for term in ["research scientist", "research engineer", "researcher"]
+        )
+    )
 
     ai_count = category_counts.get("AI", 0)
     ai_skill_mentions = (
@@ -211,7 +219,7 @@ def detect_hiring_archetype(category_counts, skill_counts, representative_roles,
     gtm_share = (sales_count + marketing_count + support_count) / latest_count if latest_count else 0
     product_engineering_share = (engineering_count + product_count + data_count) / latest_count if latest_count else 0
 
-    if any(term in role_text for term in ["research scientist", "research engineer", "researcher"]):
+    if research_role_count >= 2:
         return "AI Research Expansion"
 
     if ai_signal_share >= 0.5 and gtm_share >= 0.4:

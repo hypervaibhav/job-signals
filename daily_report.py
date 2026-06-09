@@ -9,6 +9,14 @@ from trends import (
 
 from signal_taxonomy import normalize_signal
 
+from company_intelligence import (
+    detect_hiring_archetype,
+    generate_narrative as generate_company_narrative,
+    get_company_rows,
+    classify_role as company_classify_role,
+    extract_skills as company_extract_skills,
+)
+
 DB_NAME = "jobs.db"
 
 CURRENT_LATEST_JOBS = 0
@@ -236,6 +244,114 @@ def print_company_watchlist(rows):
         print(
             "Watchlist observation: no watchlist company shows strong AI hiring concentration yet."
         )
+
+
+# --- COMPANY INTELLIGENCE HIGHLIGHTS ---
+def print_company_intelligence_highlights(rows, limit=3):
+    print("\n--- COMPANY INTELLIGENCE HIGHLIGHTS ---\n")
+
+    watchlist = calculate_company_watchlist(rows)
+
+    if not watchlist:
+        print("No company intelligence available.")
+        return
+
+    ranked_companies = sorted(
+        watchlist.items(),
+        key=lambda item: (
+            item[1]["ai_concentration"],
+            item[1]["total_postings"],
+        ),
+        reverse=True,
+    )
+
+    for company_name, stats in ranked_companies[:limit]:
+        company_rows = [row for row in rows if row[1] == company_name]
+
+        category_counts = Counter(
+            company_classify_role(row[0])
+            for row in company_rows
+        )
+
+        skill_counts = Counter()
+
+        for row in company_rows:
+            title = row[0]
+            description = row[3] or ""
+
+            for skill in company_extract_skills(title, description):
+                skill_counts[skill] += 1
+
+        representative_roles = []
+        seen_roles = set()
+
+        for row in company_rows:
+            role = row[0]
+            normalized_role = role.lower().strip()
+
+            if normalized_role not in seen_roles:
+                representative_roles.append(role)
+                seen_roles.add(normalized_role)
+
+            if len(representative_roles) == 5:
+                break
+
+        archetype = detect_hiring_archetype(
+            category_counts,
+            skill_counts,
+            representative_roles,
+            len(company_rows),
+        )
+
+        top_category = (
+            category_counts.most_common(1)[0][0]
+            if category_counts
+            else "Unknown"
+        )
+        top_skills = skill_counts.most_common(5)
+
+        historical_rows = get_company_rows(company_name)
+        historical_snapshots = sorted(set(row[4] for row in historical_rows))
+        persistence = len(historical_snapshots)
+
+        if persistence >= 2:
+            latest_snapshot = historical_snapshots[-1]
+            first_snapshot = historical_snapshots[0]
+            latest_count = len(
+                [row for row in historical_rows if row[4] == latest_snapshot]
+            )
+            first_count = len(
+                [row for row in historical_rows if row[4] == first_snapshot]
+            )
+            momentum = latest_count - first_count
+        else:
+            momentum = 0
+
+        if stats["total_postings"] >= 10 and persistence >= 3:
+            conviction = "High"
+        elif stats["total_postings"] >= 5 and persistence >= 2:
+            conviction = "Medium"
+        else:
+            conviction = "Early"
+
+        narrative = generate_company_narrative(
+            company_name,
+            momentum,
+            conviction,
+            stats["ai_concentration"],
+            top_category,
+            top_skills,
+            archetype,
+        )
+
+        print(company_name)
+        print(f"Archetype: {archetype}")
+        print(f"AI concentration: {stats['ai_concentration']:.1f}%")
+        print(f"Postings: {stats['total_postings']}")
+        print(f"Persistence: {persistence} snapshots")
+        print(f"Conviction: {conviction}")
+        print(f"Narrative: {narrative}")
+        print("")
 
 def print_opportunity_ranking(skill_changes, limit=10):
     print("\n--- OPPORTUNITY RANKING ---\n")
@@ -536,6 +652,7 @@ def print_daily_report():
     print_opportunity_ranking(skill_changes)
     print_signal_opportunities(latest, skill_changes)
     print_company_watchlist(latest)
+    print_company_intelligence_highlights(latest)
 
     print("\n--- QUICK READ ---\n")
 
