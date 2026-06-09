@@ -1,5 +1,3 @@
-
-
 # Job Signals - Architecture
 
 ## System Overview
@@ -132,6 +130,35 @@ Owns:
 
 ---
 
+### company_history.py
+
+Purpose:
+- Company memory and persistence layer.
+
+Responsibilities:
+- Company persistence tracking
+- Company memory
+- First seen tracking
+- Latest seen tracking
+- Observation window tracking
+- Historical company observations
+
+Owns:
+- snapshots_active
+- persistence_score
+- observation_window_days
+- first_seen
+- latest_seen
+- current_postings
+- peak_postings
+
+Should NOT contain:
+- Narrative generation
+- Hiring archetype detection
+- Report formatting
+
+---
+
 ### company_intelligence.py
 
 Purpose:
@@ -141,13 +168,14 @@ Responsibilities:
 - Hiring archetypes
 - Company conviction
 - Company narratives
-- Company watchlists
 - Expansion signal detection
+- Interpretation of company history
 
 Current Intelligence:
 - AI Commercialization / GTM Expansion
 - AI Product Expansion
 - AI Research Expansion
+- Observation-window-aware conviction
 
 Owns:
 - Company-level intelligence
@@ -224,21 +252,6 @@ snapshot_metadata
 
 ## Planned Modules
 
-### company_history.py
-
-Purpose:
-- Company persistence tracking
-- Company memory layer
-- Historical company observations
-
-Future Responsibilities:
-- Active snapshots
-- First seen
-- Persistence scoring
-- Company trend history
-
----
-
 ### strategic_themes.py
 
 Purpose:
@@ -261,6 +274,19 @@ Future Responsibilities:
 - Emerging clusters
 - Market narratives
 - Market direction analysis
+
+---
+
+## Company Intelligence Data Flow
+
+job_snapshots
+→ company_history.py
+→ daily_report.py
+→ company_intelligence.py
+→ Intelligence Report
+
+Design Rule:
+company_history.py is the authoritative source for persistence and observation-window metrics.
 
 ---
 
