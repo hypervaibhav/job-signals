@@ -440,33 +440,52 @@ def generate_narrative(
     top_skills,
     hiring_archetype,
 ):
-    skill_text = ", ".join(skill for skill, _ in top_skills[:3]) if top_skills else "limited tracked skills"
+    skill_text = (
+        ", ".join(skill for skill, _ in top_skills[:3])
+        if top_skills
+        else "limited tracked skills"
+    )
     archetype_explanation = explain_hiring_archetype(hiring_archetype)
 
     if conviction == "Early":
-        momentum_phrase = "is newly detected in the current signal set"
+        opening = (
+            f"{company_name} has recently entered the intelligence set and is still "
+            "in the early observation stage."
+        )
     elif momentum > 0:
-        momentum_phrase = "appears to be increasing hiring activity"
+        opening = f"{company_name} appears to be increasing hiring activity across observed roles."
     elif momentum < 0:
-        momentum_phrase = "appears to be reducing hiring activity"
+        opening = f"{company_name} appears to be reducing hiring activity relative to earlier observations."
     else:
-        momentum_phrase = "shows stable hiring activity"
+        opening = f"{company_name} shows stable hiring activity across observed snapshots."
 
-    if ai_concentration >= 50:
-        ai_phrase = "The company shows a very strong AI-related hiring concentration."
+    category_sentence = (
+        f"Current hiring is concentrated in {top_category}, "
+        f"with leading signals including {skill_text}."
+    )
+
+    if ai_concentration >= 75:
+        ai_sentence = "AI-related hiring dominates the current role mix, suggesting a highly focused investment strategy."
+    elif ai_concentration >= 50:
+        ai_sentence = "AI-related hiring represents a major share of current recruiting activity."
     elif ai_concentration >= 25:
-        ai_phrase = "The company shows a meaningful AI-related hiring concentration."
+        ai_sentence = "AI-related hiring is a meaningful component of current recruiting activity."
     elif ai_concentration > 0:
-        ai_phrase = "The company has some AI-related hiring activity."
+        ai_sentence = "Some AI-related hiring activity is present, but it is not yet a dominant pattern."
     else:
-        ai_phrase = "No strong AI-related hiring concentration is visible yet."
+        ai_sentence = "No strong AI hiring concentration is visible at the moment."
+
+    conviction_sentence = (
+        f"Signal conviction is {conviction.lower()} based on observed posting volume and persistence."
+    )
 
     return (
-        f"{company_name} {momentum_phrase}, with the strongest current activity in "
-        f"{top_category}. Top detected signals include {skill_text}. "
-        f"The detected hiring archetype is {hiring_archetype}. {archetype_explanation} "
-        f"Signal conviction is {conviction.lower()} based on current posting volume and persistence. "
-        f"{ai_phrase}"
+        f"{opening} "
+        f"{category_sentence} "
+        f"The dominant hiring pattern is {hiring_archetype}. "
+        f"{archetype_explanation} "
+        f"{ai_sentence} "
+        f"{conviction_sentence}"
     )
 
 
