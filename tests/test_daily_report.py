@@ -21,7 +21,7 @@ class CalculateCompanyIntelligenceRowsTests(unittest.TestCase):
             }
         }
 
-    def test_propagates_history_observation_window_into_company_narrative(self):
+    def test_company_narrative_does_not_repeat_observation_window_warning(self):
         latest_rows = self.make_latest_rows()
         watchlist = self.make_watchlist()
         history = {
@@ -39,7 +39,7 @@ class CalculateCompanyIntelligenceRowsTests(unittest.TestCase):
 
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["observation_window_days"], 1.5)
-        self.assertIn(
+        self.assertNotIn(
             "observation window currently spans only 1.5 days",
             rows[0]["narrative"],
         )

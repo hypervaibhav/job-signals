@@ -81,7 +81,21 @@ class DetectHiringArchetypeTests(unittest.TestCase):
 
 
 class GenerateNarrativeTests(unittest.TestCase):
-    def test_includes_observation_window_caution_when_under_seven_days(self):
+    def make_narrative(self, **overrides):
+        values = {
+            "company_name": "Acme",
+            "momentum": 0,
+            "conviction": "High",
+            "ai_concentration": 50,
+            "top_category": "Engineering",
+            "top_skills": [("python", 3)],
+            "hiring_archetype": "AI Product Expansion",
+            "observation_window_days": 7,
+        }
+        values.update(overrides)
+        return generate_narrative(**values)
+
+    def test_does_not_repeat_observation_window_caution_when_under_seven_days(self):
         narrative = generate_narrative(
             company_name="Acme",
             momentum=0,
@@ -93,22 +107,59 @@ class GenerateNarrativeTests(unittest.TestCase):
             observation_window_days=6.9,
         )
 
-        self.assertIn("observation window currently spans only 6.9 days", narrative)
-        self.assertIn("long-term durability is not yet established", narrative)
+        self.assertNotIn("observation window currently spans only", narrative)
+        self.assertNotIn("long-term durability is not yet established", narrative)
 
     def test_does_not_include_observation_window_caution_at_seven_days(self):
-        narrative = generate_narrative(
-            company_name="Acme",
-            momentum=0,
-            conviction="High",
-            ai_concentration=50,
-            top_category="Engineering",
-            top_skills=[("python", 3)],
-            hiring_archetype="AI Product Expansion",
-            observation_window_days=7,
-        )
+        narrative = self.make_narrative()
 
         self.assertNotIn("observation window currently spans only", narrative)
+
+    def test_stable_trend_with_positive_raw_momentum_does_not_claim_increasing_hiring(self):
+        narrative = self.make_narrative(momentum=1)
+
+        self.assertNotIn("appears to be increasing hiring activity", narrative)
+
+    def test_no_skills_uses_clear_fallback_sentence(self):
+        narrative = self.make_narrative(
+            top_category="Sales",
+            top_skills=[],
+        )
+
+        self.assertIn(
+            "Current hiring is concentrated in Sales, with limited tracked skill "
+            "signals.",
+            narrative,
+        )
+        self.assertNotIn(
+            "with leading signals including limited tracked skills",
+            narrative,
+        )
+
+    def test_does_not_repeat_signal_conviction(self):
+        narrative = self.make_narrative(conviction="High")
+
+        self.assertNotIn("Signal conviction is", narrative)
+
+    def test_preserves_spaces_between_narrative_words(self):
+        narrative = self.make_narrative(
+            ai_concentration=10,
+            top_skills=[("machine learning", 2)],
+            hiring_archetype="Mixed Hiring Activity",
+        )
+
+        self.assertIn("machine learning", narrative)
+        self.assertIn("is not", narrative)
+        self.assertIn("with leading", narrative)
+        self.assertIn("multiple functions", narrative)
+        for joined_word in [
+            "machinelearning",
+            "isnot",
+            "withleading",
+            "multiplefunctions",
+        ]:
+            with self.subTest(joined_word=joined_word):
+                self.assertNotIn(joined_word, narrative)
 
 
 class BuildCompanyReportTests(unittest.TestCase):
@@ -177,7 +228,7 @@ class BuildCompanyReportTests(unittest.TestCase):
             report,
         )
         self.assertIn("Conviction: High", report)
-        self.assertIn("observation window currently spans only 1.5 days", report)
+        self.assertNotIn("observation window currently spans only 1.5 days", report)
         self.assertNotIn("Old Role", report)
         classify_trend.assert_called_once_with(history)
         classify_trend_confidence.assert_called_once_with(history)

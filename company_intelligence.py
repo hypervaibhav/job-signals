@@ -568,29 +568,19 @@ def generate_narrative(
     hiring_archetype,
     observation_window_days=None,
 ):
-    skill_text = (
-        ", ".join(skill for skill, _ in top_skills[:3])
-        if top_skills
-        else "limited tracked skills"
-    )
     archetype_explanation = explain_hiring_archetype(hiring_archetype)
 
-    if conviction == "Early":
-        opening = (
-            f"{company_name} has recently entered the intelligence set and is still "
-            "in the early observation stage."
+    if top_skills:
+        skill_text = ", ".join(skill for skill, _ in top_skills[:3])
+        category_sentence = (
+            f"Current hiring is concentrated in {top_category}, "
+            f"with leading signals including {skill_text}."
         )
-    elif momentum > 0:
-        opening = f"{company_name} appears to be increasing hiring activity across observed roles."
-    elif momentum < 0:
-        opening = f"{company_name} appears to be reducing hiring activity relative to earlier observations."
     else:
-        opening = f"{company_name} shows stable hiring activity across observed snapshots."
-
-    category_sentence = (
-        f"Current hiring is concentrated in {top_category}, "
-        f"with leading signals including {skill_text}."
-    )
+        category_sentence = (
+            f"Current hiring is concentrated in {top_category}, "
+            "with limited tracked skill signals."
+        )
 
     if ai_concentration >= 75:
         ai_sentence = "AI-related hiring dominates the current role mix, suggesting a highly focused investment strategy."
@@ -603,23 +593,11 @@ def generate_narrative(
     else:
         ai_sentence = "No strong AI hiring concentration is visible at the moment."
 
-    conviction_sentence = (
-        f"Signal conviction is {conviction.lower()} based on observed posting volume and persistence."
-    )
-
-    if observation_window_days is not None and observation_window_days < 7:
-        conviction_sentence += (
-            f" The observation window currently spans only {observation_window_days:.1f} days, "
-            "so long-term durability is not yet established."
-        )
-
     return (
-        f"{opening} "
         f"{category_sentence} "
         f"The dominant hiring pattern is {hiring_archetype}. "
         f"{archetype_explanation} "
-        f"{ai_sentence} "
-        f"{conviction_sentence}"
+        f"{ai_sentence}"
     )
 
 
