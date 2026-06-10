@@ -2,63 +2,38 @@
 
 ## NOW
 
-### Intelligence Layer Stabilization
+### Market Intelligence Layer
 
 Goal:
-Improve intelligence quality and consistency before adding major new features.
+Move from company-level intelligence to market-level intelligence.
 
 Focus:
-- Canonical role taxonomy
-- Canonical AI-related detection
-- Taxonomy consistency
-- Intelligence correctness
-- Test coverage expansion
+- Theme persistence
+- Theme acceleration
+- Expanding signals
+- Contracting signals
+- Cross-company patterns
+- Market narratives
 
 Outcome:
-Ensure all intelligence outputs are derived from shared, authoritative logic.
+Identify what is changing in the market, not just who is hiring.
 
 ---
 
-### Historical Company Trends
+### Intelligence Layer Refinement
 
 Goal:
-Detect how company hiring behavior evolves over time.
+Improve consistency, clarity, and maintainability of intelligence outputs.
 
 Focus:
-- Expanding companies
-- Stable companies
-- Contracting companies
-- Trend classification
-- Trend-aware narratives
-
----
-
-### Strategic Theme Engine
-
-Goal:
-Detect business themes across multiple companies.
-
-Examples:
-- AI Commercialization
-- AI Product Expansion
-- AI Research Expansion
-- Enterprise Expansion
-- Platform Maturity
+- Remaining taxonomy gaps
+- Signal extraction consolidation
+- Report clarity
+- Narrative consistency
+- Intelligence quality improvements
 
 Outcome:
-Move from company intelligence toward market intelligence.
-
----
-
-### Narrative Intelligence
-
-Goal:
-Make reports read like analyst research rather than metric dumps.
-
-Focus:
-- Better company narratives
-- Better market narratives
-- Better intelligence summaries
+Ensure intelligence remains accurate, explainable, and easy to extend.
 
 ---
 
@@ -83,19 +58,20 @@ Role taxonomy and AI-related detection are centralized. Skill extraction and sig
 
 ---
 
-### Company Trend Intelligence
+### Strategic Theme Engine v2
 
-Examples:
-- Expanding
-- Stable
-- Contracting
-- Emerging
+Goal:
+Evolve strategic themes from snapshot observations into historical market intelligence.
 
-Status:
-Deferred.
+Focus:
+- Theme persistence
+- Theme acceleration
+- Theme history tracking
+- Theme conviction
+- Theme lifecycle analysis
 
 Reason:
-Historical data is still accumulating. Trend classification becomes more valuable as observation windows expand.
+Strategic Theme Engine v1 is complete. The next step is understanding how themes evolve over time.
 
 ---
 
@@ -177,6 +153,15 @@ Completed:
 - Canonical AI-related detection
 - Strategic signal separation from role categories
 - Single-source persistence architecture
+
+- Company trend classification
+- Emerging company detection
+- Trend confidence classification
+- Trend narratives
+- Standalone trend reporting
+- Daily report trend reporting
+- Trend characterization tests
+- Narrative cleanup and consistency improvements
 
 ---
 
