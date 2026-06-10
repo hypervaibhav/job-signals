@@ -1,6 +1,10 @@
 import unittest
 
-from strategic_themes import THEME_DEFINITIONS, detect_strategic_themes
+from strategic_themes import (
+    THEME_DEFINITIONS,
+    calculate_theme_snapshot,
+    detect_strategic_themes,
+)
 
 
 def make_row(company, intelligence):
@@ -187,6 +191,95 @@ class StrategicThemesV1CharacterizationTests(unittest.TestCase):
                 "AI Research Expansion",
                 "AI Product Expansion",
                 "AI Commercialization",
+            ],
+        )
+
+
+class ThemeSnapshotCalculationTests(unittest.TestCase):
+    def test_returns_all_defined_themes_with_required_fields(self):
+        themes = calculate_theme_snapshot([])
+
+        self.assertEqual(
+            [theme["theme"] for theme in themes],
+            list(THEME_DEFINITIONS),
+        )
+        self.assertEqual(
+            set(themes[0]),
+            {
+                "theme",
+                "companies",
+                "company_count",
+                "strength",
+                "description",
+            },
+        )
+
+    def test_preserves_singleton_themes_internally(self):
+        themes = calculate_theme_snapshot(
+            [make_row("Mistral", "AI Commercialization / GTM Expansion")]
+        )
+
+        commercialization = next(
+            theme
+            for theme in themes
+            if theme["theme"] == "AI Commercialization"
+        )
+        self.assertEqual(commercialization["companies"], ["Mistral"])
+        self.assertEqual(commercialization["company_count"], 1)
+        self.assertEqual(commercialization["strength"], "Emerging")
+
+    def test_includes_zero_count_themes_internally(self):
+        themes = calculate_theme_snapshot(
+            [
+                make_row("Integrate", "AI Product Expansion"),
+                make_row("Levelai", "AI Product Expansion"),
+            ]
+        )
+
+        zero_count_themes = [
+            theme["theme"]
+            for theme in themes
+            if theme["company_count"] == 0
+        ]
+        self.assertEqual(
+            zero_count_themes,
+            ["AI Commercialization", "AI Research Expansion"],
+        )
+        for theme in themes:
+            if theme["company_count"] == 0:
+                self.assertEqual(theme["companies"], [])
+                self.assertEqual(theme["strength"], "Emerging")
+
+    def test_description_matches_theme_definition(self):
+        themes = calculate_theme_snapshot([])
+
+        for theme in themes:
+            with self.subTest(theme=theme["theme"]):
+                self.assertEqual(
+                    theme["description"],
+                    THEME_DEFINITIONS[theme["theme"]]["description"],
+                )
+
+    def test_detect_strategic_themes_keeps_v1_presentation_shape(self):
+        themes = detect_strategic_themes(
+            [
+                make_row("Integrate", "AI Product Expansion"),
+                make_row("Levelai", "AI Product Expansion"),
+            ]
+        )
+
+        self.assertEqual(
+            themes,
+            [
+                {
+                    "theme": "AI Product Expansion",
+                    "strength": "Emerging",
+                    "company_count": 2,
+                    "companies": ["Integrate", "Levelai"],
+                    "narrative": THEME_DEFINITIONS["AI Product Expansion"][
+                        "description"
+                    ],
+                }
             ],
         )
 

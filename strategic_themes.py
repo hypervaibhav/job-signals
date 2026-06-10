@@ -41,16 +41,7 @@ def _strength_label(company_count: int) -> str:
     return "Emerging"
 
 
-def detect_strategic_themes(company_intelligence_rows):
-    """
-    company_intelligence_rows should contain dictionaries with:
-
-    {
-        "company": "...",
-        "intelligence": "AI Product Expansion"
-    }
-    """
-
+def calculate_theme_snapshot(company_intelligence_rows):
     theme_companies = defaultdict(set)
 
     for row in company_intelligence_rows:
@@ -64,14 +55,18 @@ def detect_strategic_themes(company_intelligence_rows):
 
         theme_companies[theme_name].add(company)
 
+    ordered_theme_names = list(theme_companies)
+    ordered_theme_names.extend(
+        theme_name
+        for theme_name in THEME_DEFINITIONS
+        if theme_name not in theme_companies
+    )
+
     themes = []
 
-    for theme_name, companies in theme_companies.items():
-        company_list = sorted(companies)
+    for theme_name in ordered_theme_names:
+        company_list = sorted(theme_companies[theme_name])
         company_count = len(company_list)
-
-        if company_count < 2:
-            continue
 
         themes.append(
             {
@@ -79,9 +74,34 @@ def detect_strategic_themes(company_intelligence_rows):
                 "strength": _strength_label(company_count),
                 "company_count": company_count,
                 "companies": company_list,
-                "narrative": THEME_DEFINITIONS[theme_name]["description"],
+                "description": THEME_DEFINITIONS[theme_name]["description"],
             }
         )
+
+    return themes
+
+
+def detect_strategic_themes(company_intelligence_rows):
+    """
+    company_intelligence_rows should contain dictionaries with:
+
+    {
+        "company": "...",
+        "intelligence": "AI Product Expansion"
+    }
+    """
+
+    themes = [
+        {
+            "theme": theme["theme"],
+            "strength": theme["strength"],
+            "company_count": theme["company_count"],
+            "companies": theme["companies"],
+            "narrative": theme["description"],
+        }
+        for theme in calculate_theme_snapshot(company_intelligence_rows)
+        if theme["company_count"] >= 2
+    ]
 
     themes.sort(key=lambda x: x["company_count"], reverse=True)
 
