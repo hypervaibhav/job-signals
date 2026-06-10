@@ -2,6 +2,23 @@
 
 ## NOW
 
+### Intelligence Layer Stabilization
+
+Goal:
+Improve intelligence quality and consistency before adding major new features.
+
+Focus:
+- Canonical role taxonomy
+- Canonical AI-related detection
+- Taxonomy consistency
+- Intelligence correctness
+- Test coverage expansion
+
+Outcome:
+Ensure all intelligence outputs are derived from shared, authoritative logic.
+
+---
+
 ### Historical Company Trends
 
 Goal:
@@ -47,6 +64,25 @@ Focus:
 
 ## NEXT
 
+### Taxonomy & Signal Consolidation
+
+Goal:
+Complete the transition to shared taxonomy infrastructure.
+
+Focus:
+- Canonical skill extraction
+- Unified signal extraction
+- Removal of duplicated classification logic
+- Shared intelligence primitives
+
+Status:
+Partially complete.
+
+Reason:
+Role taxonomy and AI-related detection are centralized. Skill extraction and signal extraction remain partially duplicated.
+
+---
+
 ### Company Trend Intelligence
 
 Examples:
@@ -59,7 +95,7 @@ Status:
 Deferred.
 
 Reason:
-Current dataset contains only ~12 snapshots spanning ~14 hours.
+Historical data is still accumulating. Trend classification becomes more valuable as observation windows expand.
 
 ---
 
@@ -136,6 +172,10 @@ Completed:
 - Company memory layer
 - Historical persistence tracking
 - Observation window tracking
+- Canonical role taxonomy
+- Taxonomy characterization tests
+- Canonical AI-related detection
+- Strategic signal separation from role categories
 - Single-source persistence architecture
 
 ---

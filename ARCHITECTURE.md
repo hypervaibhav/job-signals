@@ -84,8 +84,12 @@ Responsibilities:
 
 Owns:
 - Market signals
-- Skills
-- Categories
+- Signal intelligence
+- Opportunity scoring
+
+Uses:
+- role_taxonomy.py
+- signal_taxonomy.py
 
 Should NOT contain:
 - Company narratives
@@ -102,8 +106,12 @@ Responsibilities:
 - Skill grouping
 - Signal vocabulary
 - Canonical signal definitions
+- Signal normalization
+- AI-related detection
 
 Owns:
+- normalize_signal()
+- is_ai_related()
 - AI
 - Frontend
 - Backend
@@ -115,6 +123,39 @@ Owns:
 
 ---
 
+### role_taxonomy.py
+
+Purpose:
+- Canonical role classification.
+
+Responsibilities:
+- Shared role categorization
+- Category precedence rules
+- Classification consistency across intelligence systems
+- Multilingual role matching support
+
+Owns:
+- Sales
+- Engineering
+- Data / Analytics
+- Marketing
+- Support
+- Legal
+- Healthcare
+- Product
+- Operations
+- Admin / Executive
+- People / HR
+- Education
+- Production / Labour
+
+Design Rule:
+Role categories describe job function.
+Role categories are not strategic signals.
+
+All role classification should flow through role_taxonomy.py.
+
+---
 ### signal_history.py
 
 Purpose:
@@ -176,6 +217,13 @@ Current Intelligence:
 - AI Product Expansion
 - AI Research Expansion
 - Observation-window-aware conviction
+- Canonical AI-related detection
+- Taxonomy-driven role interpretation
+
+Uses:
+- company_history.py
+- role_taxonomy.py
+- signal_taxonomy.py
 
 Owns:
 - Company-level intelligence
@@ -287,6 +335,28 @@ job_snapshots
 
 Design Rule:
 company_history.py is the authoritative source for persistence and observation-window metrics.
+
+---
+
+## Taxonomy Layer
+
+Role Taxonomy
+→ role_taxonomy.py
+→ Job-function classification
+
+Signal Taxonomy
+→ signal_taxonomy.py
+→ Strategic signal classification
+
+Design Rule:
+
+Role categories answer:
+"What kind of job is this?"
+
+Signals answer:
+"What market trend does this represent?"
+
+These concepts should remain separate.
 
 ---
 

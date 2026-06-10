@@ -51,6 +51,39 @@ daily_report.py
 signal_taxonomy.py
 - signal definitions
 
+Company History
+
+* company_history.py is the authoritative source for:
+    * persistence
+    * observation windows
+    * first seen timestamps
+    * latest seen timestamps
+    * peak postings
+    * company memory metrics
+* Do not reconstruct persistence directly from job rows when company history is available.
+
+Role Taxonomy
+
+* role_taxonomy.py is the canonical role-classification layer.
+* trends.py and company_intelligence.py must use the shared taxonomy.
+* Role categories and strategic signals are separate concepts.
+* AI should not be treated as a role category.
+
+Signal Taxonomy
+
+* signal_taxonomy.py owns:
+    * signal normalization
+    * signal grouping
+    * canonical AI-related detection
+* Use signal_taxonomy.is_ai_related() when determining whether a posting is AI-related.
+* Avoid creating additional AI-detection implementations.
+
+Testing Strategy
+
+* Prefer characterization tests before major refactors.
+* Preserve approved taxonomy decisions through golden tests.
+* New intelligence logic should be covered by focused unit tests before large refactors.
+
 ## Rules
 
 - Do not change product direction.
