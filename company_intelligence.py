@@ -451,6 +451,104 @@ def build_company_report(company_name):
     )
 
 
+def generate_company_trend_narrative(trend, history):
+    if not history:
+        return None
+
+    first_postings = history["first_postings"]
+    current_postings = history["current_postings"]
+    peak_postings = history["peak_postings"]
+
+    if trend == "Emerging":
+        posting_label = "posting" if current_postings == 1 else "postings"
+        snapshot_label = (
+            "snapshot" if history["snapshots_active"] == 1 else "snapshots"
+        )
+        return (
+            f"Hiring activity is newly observed, with {current_postings} current "
+            f"{posting_label} across {history['snapshots_active']} active "
+            f"{snapshot_label} over {history['observation_window_days']:.1f} days."
+        )
+
+    if trend == "Expanding":
+        return (
+            f"Current postings increased from {first_postings} to {current_postings} "
+            f"and remain near the observed peak of {peak_postings}."
+        )
+
+    if trend == "Stable":
+        if first_postings == current_postings == peak_postings:
+            return (
+                f"Current postings remain at {current_postings}, matching the first "
+                "observed and peak levels."
+            )
+
+        return (
+            f"Current postings are {current_postings}, compared with {first_postings} "
+            f"when first observed and an observed peak of {peak_postings}; the "
+            "changes do not meet the material expansion or contraction thresholds."
+        )
+
+    if trend == "Contracting":
+        if current_postings == 0:
+            return (
+                "No postings are present in the latest snapshot, down from "
+                f"{first_postings} when first observed and an observed peak of "
+                f"{peak_postings}."
+            )
+
+        return (
+            f"Current postings declined from {first_postings} to {current_postings} "
+            f"and remain below the observed peak of {peak_postings}."
+        )
+
+    return None
+
+
+def generate_company_trend_confidence_narrative(trend_confidence, history):
+    if not history:
+        return None
+
+    if trend_confidence == "Low":
+        reasons = []
+
+        if history["observation_window_days"] < 7:
+            reasons.append("the observation window is under 7 days")
+        if history["snapshots_active"] < 6:
+            reasons.append("there are fewer than 6 active snapshots")
+        if history["persistence_score"] < 0.25:
+            reasons.append("persistence is below 25%")
+
+        if not reasons:
+            return None
+
+        if len(reasons) == 1:
+            reason_text = reasons[0]
+        elif len(reasons) == 2:
+            reason_text = f"{reasons[0]} and {reasons[1]}"
+        else:
+            reason_text = f"{', '.join(reasons[:-1])}, and {reasons[-1]}"
+
+        return f"Trend confidence is low because {reason_text}."
+
+    if trend_confidence == "Medium":
+        return (
+            "Trend confidence is medium: the history clears the low-confidence "
+            "thresholds but does not meet all established-history thresholds of "
+            "30 days, 12 active snapshots, and 75% persistence."
+        )
+
+    if trend_confidence == "High":
+        return (
+            "Trend confidence is high: the history spans "
+            f"{history['observation_window_days']:.1f} days across "
+            f"{history['snapshots_active']} active snapshots, with "
+            f"{history['persistence_score']:.1%} persistence."
+        )
+
+    return None
+
+
 def generate_narrative(
     company_name,
     momentum,
