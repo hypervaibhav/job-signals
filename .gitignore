@@ -3,3 +3,4 @@ __pycache__/
 *.db
 jobs_old_backup.db
 logs/
+.DS_Store
