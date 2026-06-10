@@ -80,6 +80,10 @@ def normalize_signal(skill):
     return skill
 
 
+def is_ai_related(skills):
+    return any(normalize_signal(skill) == "AI" for skill in skills)
+
+
 def normalize_skill_counts(skill_counts):
     grouped = {}
 

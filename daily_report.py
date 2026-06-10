@@ -7,7 +7,7 @@ from trends import (
     extract_skills,
 )
 
-from signal_taxonomy import normalize_signal
+from signal_taxonomy import is_ai_related, normalize_signal
 
 from company_intelligence import (
     detect_hiring_archetype,
@@ -184,12 +184,7 @@ def calculate_company_watchlist(rows):
             title = row[0]
             description = row[3] or ""
 
-            normalized_signals = {
-                normalize_signal(skill)
-                for skill in extract_skills(title, description)
-            }
-
-            if "AI" in normalized_signals:
+            if is_ai_related(extract_skills(title, description)):
                 ai_postings += 1
 
         total_postings = len(company_rows)
@@ -303,6 +298,7 @@ def calculate_company_intelligence_rows(rows):
             skill_counts,
             representative_roles,
             len(company_rows),
+            ai_related_count=stats["ai_postings"],
         )
 
         top_category = (

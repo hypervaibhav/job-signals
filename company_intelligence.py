@@ -6,6 +6,7 @@ from datetime import datetime
 
 from company_history import get_company_history
 from role_taxonomy import classify_role as classify_role_from_taxonomy
+from signal_taxonomy import is_ai_related
 
 DB_NAME = "jobs.db"
 
@@ -184,7 +185,13 @@ def extract_skills(title, description=""):
     return [skill for skill in SKILLS if contains_keyword(text, skill)]
 
 
-def detect_hiring_archetype(category_counts, skill_counts, representative_roles, latest_count):
+def detect_hiring_archetype(
+    category_counts,
+    skill_counts,
+    representative_roles,
+    latest_count,
+    ai_related_count=None,
+):
     role_text = " ".join(representative_roles).lower()
     research_role_count = sum(
         1
@@ -212,7 +219,10 @@ def detect_hiring_archetype(category_counts, skill_counts, representative_roles,
     data_count = category_counts.get("Data / Analytics", 0)
 
     ai_share = ai_count / latest_count if latest_count else 0
-    ai_signal_share = min(ai_count + ai_skill_mentions, latest_count) / latest_count if latest_count else 0
+    if ai_related_count is None:
+        ai_related_count = min(ai_count + ai_skill_mentions, latest_count)
+
+    ai_signal_share = ai_related_count / latest_count if latest_count else 0
     engineering_share = engineering_count / latest_count if latest_count else 0
     sales_share = sales_count / latest_count if latest_count else 0
     gtm_share = (sales_count + marketing_count + support_count) / latest_count if latest_count else 0
@@ -347,7 +357,7 @@ def build_company_report(company_name):
     ai_related_count = sum(
         1
         for row in latest_rows
-        if classify_role(row[0]) == "AI" or "ai" in extract_skills(row[0], row[3])
+        if is_ai_related(extract_skills(row[0], row[3]))
     )
     ai_concentration = (ai_related_count / latest_count) * 100 if latest_count else 0
 
@@ -358,6 +368,7 @@ def build_company_report(company_name):
         skill_counts,
         representative_roles,
         latest_count,
+        ai_related_count=ai_related_count,
     )
 
     if history["current_postings"] >= 10 and persistence >= 3:
