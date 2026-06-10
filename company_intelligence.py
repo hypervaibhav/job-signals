@@ -5,6 +5,7 @@ from collections import Counter
 from datetime import datetime
 
 from company_history import get_company_history
+from role_taxonomy import classify_role as classify_role_from_taxonomy
 
 DB_NAME = "jobs.db"
 
@@ -175,11 +176,7 @@ def format_snapshot_time(snapshot_time):
 
 
 def classify_role(title):
-    for category, keywords in CATEGORIES.items():
-        if any(contains_keyword(title, keyword) for keyword in keywords):
-            return category
-
-    return "Other"
+    return classify_role_from_taxonomy(title)
 
 
 def extract_skills(title, description=""):

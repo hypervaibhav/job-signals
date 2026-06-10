@@ -2,6 +2,7 @@ import re
 import sqlite3
 from collections import Counter
 from datetime import datetime
+from role_taxonomy import classify_role as classify_role_from_taxonomy
 from signal_taxonomy import normalize_signal
 
 DB_NAME = "jobs.db"
@@ -318,13 +319,7 @@ def save_signal_snapshot(
 
 
 def classify_role(title):
-    title = title.lower()
-
-    for category, keywords in CATEGORIES.items():
-        if any(contains_keyword(title, keyword) for keyword in keywords):
-            return category
-
-    return "Other"
+    return classify_role_from_taxonomy(title)
 
 
 def extract_skills(title, description=""):
