@@ -1,3 +1,4 @@
+import math
 import sqlite3
 from collections import defaultdict
 from datetime import datetime
@@ -7,6 +8,57 @@ DB_NAME = "jobs.db"
 
 def format_snapshot_time(snapshot_time):
     return datetime.fromtimestamp(int(snapshot_time)).strftime("%Y-%m-%d %I:%M:%S %p")
+
+
+def _material_change(posting_count):
+    return max(2, math.ceil(posting_count * 0.25))
+
+
+def classify_company_trend(history):
+    first_postings = history["first_postings"]
+    current_postings = history["current_postings"]
+    peak_postings = history["peak_postings"]
+
+    if current_postings == 0:
+        return "Contracting"
+
+    if (
+        history["snapshots_active"] < 3
+        or history["observation_window_days"] < 1
+    ):
+        return "Emerging"
+
+    if (
+        current_postings - first_postings >= _material_change(first_postings)
+        and current_postings >= math.ceil(peak_postings * 0.75)
+    ):
+        return "Expanding"
+
+    if (
+        first_postings - current_postings >= _material_change(first_postings)
+        and peak_postings - current_postings >= _material_change(peak_postings)
+    ):
+        return "Contracting"
+
+    return "Stable"
+
+
+def classify_company_trend_confidence(history):
+    if (
+        history["observation_window_days"] < 7
+        or history["snapshots_active"] < 6
+        or history["persistence_score"] < 0.25
+    ):
+        return "Low"
+
+    if (
+        history["observation_window_days"] >= 30
+        and history["snapshots_active"] >= 12
+        and history["persistence_score"] >= 0.75
+    ):
+        return "High"
+
+    return "Medium"
 
 
 def get_snapshot_times():
