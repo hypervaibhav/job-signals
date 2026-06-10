@@ -11,6 +11,8 @@ from signal_taxonomy import is_ai_related, normalize_signal
 
 from company_intelligence import (
     detect_hiring_archetype,
+    generate_company_trend_confidence_narrative,
+    generate_company_trend_narrative,
     generate_narrative as generate_company_narrative,
     classify_role as company_classify_role,
     extract_skills as company_extract_skills,
@@ -321,18 +323,29 @@ def calculate_company_intelligence_rows(rows):
             observation_window_days = history["observation_window_days"]
             try:
                 trend = classify_company_trend(history)
+                trend_narrative = generate_company_trend_narrative(trend, history)
             except KeyError:
                 trend = None
+                trend_narrative = None
             try:
                 trend_confidence = classify_company_trend_confidence(history)
+                trend_confidence_narrative = (
+                    generate_company_trend_confidence_narrative(
+                        trend_confidence,
+                        history,
+                    )
+                )
             except KeyError:
                 trend_confidence = None
+                trend_confidence_narrative = None
         else:
             persistence = 1
             momentum = 0
             observation_window_days = None
             trend = None
+            trend_narrative = None
             trend_confidence = None
+            trend_confidence_narrative = None
 
         if stats["total_postings"] >= 10 and persistence >= 3:
             conviction = "High"
@@ -362,7 +375,9 @@ def calculate_company_intelligence_rows(rows):
                 "persistence": persistence,
                 "observation_window_days": observation_window_days,
                 "trend": trend,
+                "trend_narrative": trend_narrative,
                 "trend_confidence": trend_confidence,
+                "trend_confidence_narrative": trend_confidence_narrative,
                 "conviction": conviction,
                 "narrative": narrative,
             }
@@ -409,8 +424,15 @@ def print_company_intelligence_highlights(company_intelligence_rows, limit=3):
             print(f"Observed for: {row['observation_window_days']:.1f} days")
         if row["trend"] is not None:
             print(f"Hiring trend: {row['trend']}")
+        if row.get("trend_narrative") is not None:
+            print(f"Trend explanation: {row['trend_narrative']}")
         if row["trend_confidence"] is not None:
             print(f"Trend confidence: {row['trend_confidence']}")
+        if row.get("trend_confidence_narrative") is not None:
+            print(
+                "Confidence explanation: "
+                f"{row['trend_confidence_narrative']}"
+            )
         print(f"Conviction: {row['conviction']}")
         print(f"Narrative: {row['narrative']}")
         print("")

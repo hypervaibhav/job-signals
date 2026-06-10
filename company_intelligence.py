@@ -336,6 +336,11 @@ def build_company_report(company_name):
     observation_window_days = history["observation_window_days"]
     hiring_trend = classify_company_trend(history)
     trend_confidence = classify_company_trend_confidence(history)
+    trend_narrative = generate_company_trend_narrative(hiring_trend, history)
+    trend_confidence_narrative = generate_company_trend_confidence_narrative(
+        trend_confidence,
+        history,
+    )
 
     category_counts = Counter(classify_role(row[0]) for row in latest_rows)
 
@@ -405,7 +410,11 @@ def build_company_report(company_name):
     print(f"Peak postings: {history['peak_postings']}")
     print(f"Hiring momentum: {momentum_label}")
     print(f"Hiring trend: {hiring_trend}")
+    if trend_narrative is not None:
+        print(f"Trend explanation: {trend_narrative}")
     print(f"Trend confidence: {trend_confidence}")
+    if trend_confidence_narrative is not None:
+        print(f"Confidence explanation: {trend_confidence_narrative}")
     print(f"Conviction: {conviction}")
     print(f"AI concentration: {ai_concentration:.1f}%")
     if persistence < 2:

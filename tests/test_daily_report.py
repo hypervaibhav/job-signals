@@ -1,4 +1,6 @@
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
 from unittest.mock import patch
 
 import daily_report
@@ -71,6 +73,18 @@ class CalculateCompanyIntelligenceRowsTests(unittest.TestCase):
                 return_value="High",
                 create=True,
             ) as classify_trend_confidence,
+            patch.object(
+                daily_report,
+                "generate_company_trend_narrative",
+                return_value="Trend explanation text.",
+                create=True,
+            ) as generate_trend_narrative,
+            patch.object(
+                daily_report,
+                "generate_company_trend_confidence_narrative",
+                return_value="Confidence explanation text.",
+                create=True,
+            ) as generate_trend_confidence_narrative,
         ):
             rows = daily_report.calculate_company_intelligence_rows(
                 self.make_latest_rows()
@@ -82,6 +96,13 @@ class CalculateCompanyIntelligenceRowsTests(unittest.TestCase):
         self.assertIs(classify_trend_confidence.call_args.args[0], history)
         self.assertEqual(rows[0]["trend"], "Expanding")
         self.assertEqual(rows[0]["trend_confidence"], "High")
+        generate_trend_narrative.assert_called_once_with("Expanding", history)
+        generate_trend_confidence_narrative.assert_called_once_with("High", history)
+        self.assertEqual(rows[0]["trend_narrative"], "Trend explanation text.")
+        self.assertEqual(
+            rows[0]["trend_confidence_narrative"],
+            "Confidence explanation text.",
+        )
 
     def test_missing_history_preserves_existing_fallback_without_trend_reconstruction(self):
         with (
@@ -101,6 +122,16 @@ class CalculateCompanyIntelligenceRowsTests(unittest.TestCase):
                 "classify_company_trend_confidence",
                 create=True,
             ) as classify_trend_confidence,
+            patch.object(
+                daily_report,
+                "generate_company_trend_narrative",
+                create=True,
+            ) as generate_trend_narrative,
+            patch.object(
+                daily_report,
+                "generate_company_trend_confidence_narrative",
+                create=True,
+            ) as generate_trend_confidence_narrative,
         ):
             rows = daily_report.calculate_company_intelligence_rows(
                 self.make_latest_rows()
@@ -108,11 +139,44 @@ class CalculateCompanyIntelligenceRowsTests(unittest.TestCase):
 
         classify_trend.assert_not_called()
         classify_trend_confidence.assert_not_called()
+        generate_trend_narrative.assert_not_called()
+        generate_trend_confidence_narrative.assert_not_called()
         self.assertEqual(rows[0]["persistence"], 1)
         self.assertIsNone(rows[0]["observation_window_days"])
         self.assertEqual(rows[0]["conviction"], "Early")
         self.assertIsNone(rows[0]["trend"])
         self.assertIsNone(rows[0]["trend_confidence"])
+        self.assertIsNone(rows[0]["trend_narrative"])
+        self.assertIsNone(rows[0]["trend_confidence_narrative"])
+
+    def test_highlights_print_trend_explanations(self):
+        output = StringIO()
+        row = {
+            "company": "Mistral",
+            "intelligence": "AI Product Expansion",
+            "ai_concentration": 100.0,
+            "total_postings": 10,
+            "persistence": 10,
+            "observation_window_days": 2.4,
+            "trend": "Stable",
+            "trend_narrative": "Trend explanation text.",
+            "trend_confidence": "Low",
+            "trend_confidence_narrative": "Confidence explanation text.",
+            "conviction": "High",
+            "narrative": "Company narrative text.",
+        }
+
+        with redirect_stdout(output):
+            daily_report.print_company_intelligence_highlights([row])
+
+        report = output.getvalue()
+        self.assertIn("Hiring trend: Stable", report)
+        self.assertIn("Trend explanation: Trend explanation text.", report)
+        self.assertIn("Trend confidence: Low", report)
+        self.assertIn(
+            "Confidence explanation: Confidence explanation text.",
+            report,
+        )
 
 
 if __name__ == "__main__":

@@ -145,6 +145,16 @@ class BuildCompanyReportTests(unittest.TestCase):
             ) as classify_trend_confidence,
             patch.object(
                 company_intelligence,
+                "generate_company_trend_narrative",
+                return_value="Trend explanation text.",
+            ) as generate_trend_narrative,
+            patch.object(
+                company_intelligence,
+                "generate_company_trend_confidence_narrative",
+                return_value="Confidence explanation text.",
+            ) as generate_trend_confidence_narrative,
+            patch.object(
+                company_intelligence,
                 "format_snapshot_time",
                 side_effect=lambda timestamp: f"formatted-{timestamp}",
             ),
@@ -160,12 +170,19 @@ class BuildCompanyReportTests(unittest.TestCase):
         self.assertIn("Peak postings: 12", report)
         self.assertIn("Hiring momentum: Rising (+8)", report)
         self.assertIn("Hiring trend: Expanding", report)
+        self.assertIn("Trend explanation: Trend explanation text.", report)
         self.assertIn("Trend confidence: Low", report)
+        self.assertIn(
+            "Confidence explanation: Confidence explanation text.",
+            report,
+        )
         self.assertIn("Conviction: High", report)
         self.assertIn("observation window currently spans only 1.5 days", report)
         self.assertNotIn("Old Role", report)
         classify_trend.assert_called_once_with(history)
         classify_trend_confidence.assert_called_once_with(history)
+        generate_trend_narrative.assert_called_once_with("Expanding", history)
+        generate_trend_confidence_narrative.assert_called_once_with("Low", history)
 
     def test_reports_missing_history_without_reconstructing_persistence(self):
         output = StringIO()
