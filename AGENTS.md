@@ -84,6 +84,43 @@ Testing Strategy
 * Preserve approved taxonomy decisions through golden tests.
 * New intelligence logic should be covered by focused unit tests before large refactors.
 
+## Codex Workflow
+
+Development Process
+
+* For non-trivial features:
+    1. Inspect existing implementation.
+    2. Add characterization tests for current behavior.
+    3. Run the full test suite.
+    4. Propose the smallest implementation that satisfies the tests.
+    5. Re-run the full test suite.
+    6. Summarize changes, risks, and next steps.
+
+Implementation Rules
+
+* Prefer extending existing intelligence systems over creating parallel systems.
+* Do not duplicate taxonomy, trend, persistence, or narrative logic.
+* Use authoritative sources already defined in this document.
+* Separate calculation, persistence, and presentation responsibilities.
+
+Commit Policy
+
+* Do not create commits unless explicitly instructed.
+* Before any commit, provide:
+    * files changed
+    * behavior changed
+    * test results
+    * risks and follow-ups
+
+Strategic Theme Engine
+
+* Preserve separation between:
+    * calculation
+    * persistence
+    * presentation
+* Keep daily_report.py focused on orchestration and presentation.
+* Keep strategic intelligence calculations inside domain modules.
+
 ## Rules
 
 - Do not change product direction.
@@ -93,6 +130,7 @@ Testing Strategy
 - Add tests for new behavior.
 - Preserve CLI behavior.
 - Do not commit directly to main unless instructed.
+- Prefer characterization tests before implementing new intelligence features.
 
 ## Verification
 
