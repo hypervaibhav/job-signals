@@ -123,6 +123,7 @@ class BuildCompanyReportTests(unittest.TestCase):
             "first_seen": 100,
             "latest_seen": 200,
             "observation_window_days": 1.5,
+            "persistence_score": 0.7,
             "first_postings": 2,
             "current_postings": 10,
             "peak_postings": 12,
@@ -132,6 +133,16 @@ class BuildCompanyReportTests(unittest.TestCase):
         with (
             patch.object(company_intelligence, "get_company_rows", return_value=rows),
             patch.object(company_intelligence, "get_company_history", return_value=history),
+            patch.object(
+                company_intelligence,
+                "classify_company_trend",
+                return_value="Expanding",
+            ) as classify_trend,
+            patch.object(
+                company_intelligence,
+                "classify_company_trend_confidence",
+                return_value="Low",
+            ) as classify_trend_confidence,
             patch.object(
                 company_intelligence,
                 "format_snapshot_time",
@@ -148,9 +159,13 @@ class BuildCompanyReportTests(unittest.TestCase):
         self.assertIn("Current postings: 10", report)
         self.assertIn("Peak postings: 12", report)
         self.assertIn("Hiring momentum: Rising (+8)", report)
+        self.assertIn("Hiring trend: Expanding", report)
+        self.assertIn("Trend confidence: Low", report)
         self.assertIn("Conviction: High", report)
         self.assertIn("observation window currently spans only 1.5 days", report)
         self.assertNotIn("Old Role", report)
+        classify_trend.assert_called_once_with(history)
+        classify_trend_confidence.assert_called_once_with(history)
 
     def test_reports_missing_history_without_reconstructing_persistence(self):
         output = StringIO()

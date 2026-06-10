@@ -4,7 +4,11 @@ import sys
 from collections import Counter
 from datetime import datetime
 
-from company_history import get_company_history
+from company_history import (
+    classify_company_trend,
+    classify_company_trend_confidence,
+    get_company_history,
+)
 from role_taxonomy import classify_role as classify_role_from_taxonomy
 from signal_taxonomy import is_ai_related
 
@@ -330,6 +334,8 @@ def build_company_report(company_name):
     persistence = history["snapshots_active"]
     momentum = history["current_postings"] - history["first_postings"]
     observation_window_days = history["observation_window_days"]
+    hiring_trend = classify_company_trend(history)
+    trend_confidence = classify_company_trend_confidence(history)
 
     category_counts = Counter(classify_role(row[0]) for row in latest_rows)
 
@@ -398,6 +404,8 @@ def build_company_report(company_name):
     print(f"Current postings: {history['current_postings']}")
     print(f"Peak postings: {history['peak_postings']}")
     print(f"Hiring momentum: {momentum_label}")
+    print(f"Hiring trend: {hiring_trend}")
+    print(f"Trend confidence: {trend_confidence}")
     print(f"Conviction: {conviction}")
     print(f"AI concentration: {ai_concentration:.1f}%")
     if persistence < 2:
