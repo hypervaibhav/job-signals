@@ -17,7 +17,12 @@ from company_intelligence import (
 )
 
 from strategic_themes import detect_strategic_themes
-from company_history import get_company_histories, get_company_history
+from company_history import (
+    classify_company_trend,
+    classify_company_trend_confidence,
+    get_company_histories,
+    get_company_history,
+)
 
 DB_NAME = "jobs.db"
 
@@ -314,10 +319,20 @@ def calculate_company_intelligence_rows(rows):
             persistence = history["snapshots_active"]
             momentum = history["current_postings"] - history["first_postings"]
             observation_window_days = history["observation_window_days"]
+            try:
+                trend = classify_company_trend(history)
+            except KeyError:
+                trend = None
+            try:
+                trend_confidence = classify_company_trend_confidence(history)
+            except KeyError:
+                trend_confidence = None
         else:
             persistence = 1
             momentum = 0
             observation_window_days = None
+            trend = None
+            trend_confidence = None
 
         if stats["total_postings"] >= 10 and persistence >= 3:
             conviction = "High"
@@ -346,6 +361,8 @@ def calculate_company_intelligence_rows(rows):
                 "total_postings": stats["total_postings"],
                 "persistence": persistence,
                 "observation_window_days": observation_window_days,
+                "trend": trend,
+                "trend_confidence": trend_confidence,
                 "conviction": conviction,
                 "narrative": narrative,
             }
@@ -390,6 +407,10 @@ def print_company_intelligence_highlights(company_intelligence_rows, limit=3):
         print(f"Persistence: {row['persistence']} {snapshot_label}")
         if row["observation_window_days"] is not None:
             print(f"Observed for: {row['observation_window_days']:.1f} days")
+        if row["trend"] is not None:
+            print(f"Hiring trend: {row['trend']}")
+        if row["trend_confidence"] is not None:
+            print(f"Trend confidence: {row['trend_confidence']}")
         print(f"Conviction: {row['conviction']}")
         print(f"Narrative: {row['narrative']}")
         print("")
