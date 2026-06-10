@@ -4,6 +4,8 @@ import sys
 from collections import Counter
 from datetime import datetime
 
+from company_history import get_company_history
+
 DB_NAME = "jobs.db"
 
 SKILLS = [
@@ -310,17 +312,17 @@ def build_company_report(company_name):
             print(f"- {company}: {count} postings")
         return
 
-    snapshots = sorted(set(row[4] for row in rows))
-    latest_snapshot = snapshots[-1]
-    first_snapshot = snapshots[0]
+    history = get_company_history(company_name)
 
-    latest_rows = [row for row in rows if row[4] == latest_snapshot]
-    first_rows = [row for row in rows if row[4] == first_snapshot]
+    if not history:
+        print(f"No company history found for company: {company_name}")
+        return
 
+    latest_rows = [row for row in rows if row[4] == history["latest_seen"]]
     latest_count = len(latest_rows)
-    first_count = len(first_rows)
-    momentum = latest_count - first_count
-    persistence = len(snapshots)
+    persistence = history["snapshots_active"]
+    momentum = history["current_postings"] - history["first_postings"]
+    observation_window_days = history["observation_window_days"]
 
     category_counts = Counter(classify_role(row[0]) for row in latest_rows)
 
@@ -361,9 +363,9 @@ def build_company_report(company_name):
         latest_count,
     )
 
-    if latest_count >= 10 and persistence >= 3:
+    if history["current_postings"] >= 10 and persistence >= 3:
         conviction = "High"
-    elif latest_count >= 5 and persistence >= 2:
+    elif history["current_postings"] >= 5 and persistence >= 2:
         conviction = "Medium"
     else:
         conviction = "Early"
@@ -382,10 +384,11 @@ def build_company_report(company_name):
     print("========================================\n")
 
     print(f"Company: {company_name}")
-    print(f"Latest snapshot: {format_snapshot_time(latest_snapshot)}")
-    print(f"First seen: {format_snapshot_time(first_snapshot)}")
+    print(f"Latest snapshot: {format_snapshot_time(history['latest_seen'])}")
+    print(f"First seen: {format_snapshot_time(history['first_seen'])}")
     print(f"Persistence: {persistence} snapshots")
-    print(f"Current postings: {latest_count}")
+    print(f"Current postings: {history['current_postings']}")
+    print(f"Peak postings: {history['peak_postings']}")
     print(f"Hiring momentum: {momentum_label}")
     print(f"Conviction: {conviction}")
     print(f"AI concentration: {ai_concentration:.1f}%")
@@ -427,7 +430,7 @@ def build_company_report(company_name):
             top_category,
             top_skills,
             hiring_archetype,
-            observation_window_days=None,
+            observation_window_days=observation_window_days,
         )
     )
 
