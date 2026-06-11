@@ -1,9 +1,11 @@
+import sqlite3
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
 import daily_report
+import strategic_theme_history
 
 
 class CalculateCompanyIntelligenceRowsTests(unittest.TestCase):
@@ -176,6 +178,216 @@ class CalculateCompanyIntelligenceRowsTests(unittest.TestCase):
         self.assertIn(
             "Confidence explanation: Confidence explanation text.",
             report,
+        )
+
+
+class StrategicThemePersistenceIntegrationTests(unittest.TestCase):
+    def persist_snapshot(self, conn, snapshot_time, company_intelligence_rows):
+        self.assertTrue(
+            hasattr(daily_report, "persist_strategic_theme_snapshot"),
+            "daily_report.persist_strategic_theme_snapshot must implement "
+            "the orchestration contract",
+        )
+        return daily_report.persist_strategic_theme_snapshot(
+            conn,
+            snapshot_time,
+            company_intelligence_rows,
+        )
+
+    def make_intelligence_rows(self):
+        return [
+            {
+                "company": "Mistral",
+                "intelligence": "AI Commercialization / GTM Expansion",
+            },
+            {
+                "company": "Integrate",
+                "intelligence": "AI Product Expansion",
+            },
+        ]
+
+    def make_complete_themes(self):
+        return [
+            {
+                "theme": "AI Commercialization",
+                "company_count": 1,
+                "companies": ["Mistral"],
+            },
+            {
+                "theme": "AI Product Expansion",
+                "company_count": 1,
+                "companies": ["Integrate"],
+            },
+            {
+                "theme": "AI Research Expansion",
+                "company_count": 0,
+                "companies": [],
+            },
+        ]
+
+    def test_persistence_helper_saves_complete_calculated_snapshot(self):
+        conn = object()
+        rows = self.make_intelligence_rows()
+        themes = self.make_complete_themes()
+
+        with (
+            patch.object(
+                daily_report,
+                "calculate_theme_snapshot",
+                return_value=themes,
+                create=True,
+            ) as calculate_snapshot,
+            patch.object(
+                daily_report,
+                "save_theme_snapshot",
+                create=True,
+            ) as save_snapshot,
+            patch.object(
+                daily_report,
+                "detect_strategic_themes",
+            ) as detect_themes,
+        ):
+            self.persist_snapshot(conn, 123, rows)
+
+        calculate_snapshot.assert_called_once_with(rows)
+        save_snapshot.assert_called_once_with(
+            conn,
+            123,
+            themes,
+            eligible_company_count=2,
+        )
+        detect_themes.assert_not_called()
+
+    def test_persistence_helper_is_idempotent_through_save_theme_snapshot(self):
+        conn = sqlite3.connect(":memory:")
+        self.addCleanup(conn.close)
+        strategic_theme_history.initialize_strategic_theme_history(conn)
+        rows = self.make_intelligence_rows()
+        themes = self.make_complete_themes()
+
+        with (
+            patch.object(
+                daily_report,
+                "calculate_theme_snapshot",
+                return_value=themes,
+                create=True,
+            ),
+            patch.object(
+                daily_report,
+                "save_theme_snapshot",
+                wraps=strategic_theme_history.save_theme_snapshot,
+                create=True,
+            ),
+        ):
+            self.persist_snapshot(conn, 123, rows)
+            self.persist_snapshot(conn, 123, rows)
+
+        snapshot_count = conn.execute(
+            "SELECT COUNT(*) FROM strategic_theme_snapshots"
+        ).fetchone()[0]
+        membership_count = conn.execute(
+            "SELECT COUNT(*) FROM strategic_theme_companies"
+        ).fetchone()[0]
+        self.assertEqual(snapshot_count, 3)
+        self.assertEqual(membership_count, 2)
+
+    def test_persistence_helper_does_not_swallow_save_errors(self):
+        with (
+            patch.object(
+                daily_report,
+                "calculate_theme_snapshot",
+                return_value=self.make_complete_themes(),
+                create=True,
+            ),
+            patch.object(
+                daily_report,
+                "save_theme_snapshot",
+                side_effect=sqlite3.OperationalError("save failed"),
+                create=True,
+            ),
+        ):
+            with self.assertRaisesRegex(sqlite3.OperationalError, "save failed"):
+                self.persist_snapshot(
+                    object(),
+                    123,
+                    self.make_intelligence_rows(),
+                )
+
+    def test_report_uses_authoritative_latest_snapshot_time_for_persistence(self):
+        latest = [("AI Engineer", "Mistral", 200, "AI", "lever")]
+        previous = [("Engineer", "Mistral", 100, "", "lever")]
+        intelligence_rows = self.make_intelligence_rows()
+
+        with (
+            patch.object(
+                daily_report,
+                "get_latest_two_snapshots",
+                return_value=(200, 100, latest, previous),
+            ),
+            patch.object(
+                daily_report,
+                "calculate_company_intelligence_rows",
+                return_value=intelligence_rows,
+            ),
+            patch.object(
+                daily_report,
+                "persist_strategic_theme_snapshot",
+                create=True,
+            ) as persist_snapshot,
+            patch.object(daily_report, "print_market_narrative"),
+            patch.object(daily_report, "print_opportunity_ranking"),
+            patch.object(daily_report, "print_signal_opportunities"),
+            patch.object(daily_report, "print_company_watchlist"),
+            patch.object(daily_report, "print_company_memory"),
+            patch.object(daily_report, "print_strategic_themes"),
+            patch.object(daily_report, "print_company_intelligence_highlights"),
+            redirect_stdout(StringIO()),
+        ):
+            daily_report.print_daily_report()
+
+        persist_snapshot.assert_called_once_with(ANY, 200, intelligence_rows)
+
+    def test_report_does_not_persist_when_fewer_than_two_snapshots_exist(self):
+        with (
+            patch.object(
+                daily_report,
+                "get_latest_two_snapshots",
+                return_value=(100, None, [("Engineer", "Acme", 100, "", "api")], []),
+            ),
+            patch.object(
+                daily_report,
+                "persist_strategic_theme_snapshot",
+                create=True,
+            ) as persist_snapshot,
+            redirect_stdout(StringIO()),
+        ):
+            daily_report.print_daily_report()
+
+        persist_snapshot.assert_not_called()
+
+    def test_v1_printed_strategic_theme_output_remains_unchanged(self):
+        output = StringIO()
+        rows = [
+            {"company": "Integrate", "intelligence": "AI Product Expansion"},
+            {"company": "Levelai", "intelligence": "AI Product Expansion"},
+        ]
+
+        with redirect_stdout(output):
+            daily_report.print_strategic_themes(rows)
+
+        self.assertEqual(
+            output.getvalue(),
+            (
+                "\n--- STRATEGIC THEMES ---\n\n"
+                "AI Product Expansion\n"
+                "Strength: Emerging\n"
+                "Companies: 2\n"
+                "Representative companies:\n"
+                "- Integrate\n"
+                "- Levelai\n"
+                "Interpretation: Companies are increasing product and "
+                "engineering investment around AI-enabled offerings.\n\n"
+            ),
         )
 
 
