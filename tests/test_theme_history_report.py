@@ -1,6 +1,7 @@
 import sqlite3
 import tempfile
 import unittest
+from unittest import mock
 from contextlib import redirect_stdout
 from datetime import datetime
 from io import StringIO
@@ -82,6 +83,7 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "\n"
                 "AI Product Expansion\n"
                 "Lifecycle: Emerging\n"
+                "Theme Confidence: Low\n"
                 "Explanation: AI Product Expansion is newly detected, appearing "
                 "in 2 active snapshots out of 2 eligible snapshots, which is "
                 "fewer than the 3 active snapshots needed for an established "
@@ -96,6 +98,7 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "\n"
                 "AI Commercialization\n"
                 "Lifecycle: Emerging\n"
+                "Theme Confidence: Low\n"
                 "Explanation: AI Commercialization is newly detected, appearing "
                 "in 2 active snapshots out of 2 eligible snapshots, which is "
                 "fewer than the 3 active snapshots needed for an established "
@@ -110,6 +113,7 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "\n"
                 "AI Research Expansion\n"
                 "Lifecycle: Stable\n"
+                "Theme Confidence: Low\n"
                 "Explanation: AI Research Expansion has not matched any "
                 "companies across 2 eligible snapshots.\n"
                 "Persistence: 0/2 snapshots\n"
@@ -214,6 +218,101 @@ class ThemeHistoryReportTests(unittest.TestCase):
         self.assertIn("AI Commercialization\nLifecycle: Emerging\n", report)
         self.assertIn("AI Research Expansion\nLifecycle: Stable\n", report)
 
+    def test_report_prints_theme_confidence_after_lifecycle(self):
+        self.save_sample_history()
+        module = self.report_module()
+
+        report = module.build_theme_history_report(self.conn)
+
+        self.assertIn(
+            "AI Product Expansion\n"
+            "Lifecycle: Emerging\n"
+            "Theme Confidence: Low\n"
+            "Explanation: AI Product Expansion is newly detected",
+            report,
+        )
+        self.assertLess(
+            report.index("Lifecycle: Emerging\n"),
+            report.index("Theme Confidence: Low\n"),
+        )
+        self.assertLess(
+            report.index("Theme Confidence: Low\n"),
+            report.index("Explanation: AI Product Expansion"),
+        )
+
+    def test_report_uses_theme_confidence_helper(self):
+        self.save_sample_history()
+        module = self.report_module()
+
+        with mock.patch.object(
+            module,
+            "classify_theme_confidence",
+            return_value="Moderate",
+            create=True,
+        ) as classify_confidence:
+            report = module.build_theme_history_report(self.conn)
+
+        self.assertTrue(
+            classify_confidence.call_args_list,
+            "theme_history_report.py should call "
+            "classify_theme_confidence(history, lifecycle)",
+        )
+        first_call = classify_confidence.call_args_list[0]
+        self.assertEqual(first_call.args[0]["theme"], "AI Product Expansion")
+        self.assertEqual(first_call.args[1], "Emerging")
+        self.assertIn("Theme Confidence: Moderate\n", report)
+
+    def test_report_prints_low_theme_confidence(self):
+        self.save_sample_history()
+        module = self.report_module()
+
+        report = module.build_theme_history_report(self.conn)
+
+        self.assertIn(
+            "AI Research Expansion\n"
+            "Lifecycle: Stable\n"
+            "Theme Confidence: Low\n",
+            report,
+        )
+
+    def test_report_prints_moderate_theme_confidence(self):
+        for snapshot_time in [100, 200, 300, 400]:
+            strategic_theme_history.save_theme_snapshot(
+                self.conn,
+                snapshot_time,
+                make_complete_snapshot(product=["Integrate", "Levelai"]),
+                eligible_company_count=3,
+            )
+        module = self.report_module()
+
+        report = module.build_theme_history_report(self.conn)
+
+        self.assertIn(
+            "AI Product Expansion\n"
+            "Lifecycle: Stable\n"
+            "Theme Confidence: Moderate\n",
+            report,
+        )
+
+    def test_report_prints_high_theme_confidence(self):
+        for snapshot_time in [100, 200, 300, 400, 500, 600]:
+            strategic_theme_history.save_theme_snapshot(
+                self.conn,
+                snapshot_time,
+                make_complete_snapshot(product=["Integrate", "Levelai"]),
+                eligible_company_count=3,
+            )
+        module = self.report_module()
+
+        report = module.build_theme_history_report(self.conn)
+
+        self.assertIn(
+            "AI Product Expansion\n"
+            "Lifecycle: Stable\n"
+            "Theme Confidence: High\n",
+            report,
+        )
+
     def test_report_prints_lifecycle_explanation_after_lifecycle(self):
         self.save_sample_history()
         module = self.report_module()
@@ -223,6 +322,7 @@ class ThemeHistoryReportTests(unittest.TestCase):
         self.assertIn(
             "AI Product Expansion\n"
             "Lifecycle: Emerging\n"
+            "Theme Confidence: Low\n"
             "Explanation: AI Product Expansion is newly detected",
             report,
         )
@@ -239,7 +339,7 @@ class ThemeHistoryReportTests(unittest.TestCase):
         self.save_sample_history()
         module = self.report_module()
 
-        with unittest.mock.patch.object(
+        with mock.patch.object(
             module,
             "generate_theme_lifecycle_narrative",
             return_value="Narrative text.",
@@ -432,6 +532,7 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "\n"
                 "AI Product Expansion\n"
                 "Lifecycle: Emerging\n"
+                "Theme Confidence: Low\n"
                 "Explanation: AI Product Expansion is newly detected, appearing "
                 "in 1 active snapshot out of 1 eligible snapshot, which is "
                 "fewer than the 3 active snapshots needed for an established "
@@ -446,6 +547,7 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "\n"
                 "AI Commercialization\n"
                 "Lifecycle: Stable\n"
+                "Theme Confidence: Low\n"
                 "Explanation: AI Commercialization has not matched any "
                 "companies across 1 eligible snapshot.\n"
                 "Persistence: 0/1 snapshots\n"
@@ -458,6 +560,7 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "\n"
                 "AI Research Expansion\n"
                 "Lifecycle: Stable\n"
+                "Theme Confidence: Low\n"
                 "Explanation: AI Research Expansion has not matched any "
                 "companies across 1 eligible snapshot.\n"
                 "Persistence: 0/1 snapshots\n"
