@@ -18,7 +18,8 @@ from company_intelligence import (
     extract_skills as company_extract_skills,
 )
 
-from strategic_themes import detect_strategic_themes
+from strategic_theme_history import save_theme_snapshot
+from strategic_themes import calculate_theme_snapshot, detect_strategic_themes
 from company_history import (
     classify_company_trend,
     classify_company_trend_confidence,
@@ -384,6 +385,20 @@ def calculate_company_intelligence_rows(rows):
         )
 
     return intelligence_rows
+
+
+def persist_strategic_theme_snapshot(
+    conn,
+    snapshot_time,
+    company_intelligence_rows,
+):
+    themes = calculate_theme_snapshot(company_intelligence_rows)
+    save_theme_snapshot(
+        conn,
+        snapshot_time,
+        themes,
+        eligible_company_count=len(company_intelligence_rows),
+    )
 
 
 def print_strategic_themes(company_intelligence_rows, limit=5):
@@ -773,6 +788,15 @@ def print_daily_report():
     print_opportunity_ranking(skill_changes)
 
     company_intelligence_rows = calculate_company_intelligence_rows(latest)
+    conn = sqlite3.connect(DB_NAME)
+    try:
+        persist_strategic_theme_snapshot(
+            conn,
+            latest_time,
+            company_intelligence_rows,
+        )
+    finally:
+        conn.close()
 
     print_signal_opportunities(latest, skill_changes)
     print_company_watchlist(latest)

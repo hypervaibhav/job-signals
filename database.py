@@ -2,6 +2,8 @@ import hashlib
 import sqlite3
 import time
 
+from strategic_theme_history import initialize_strategic_theme_history
+
 DB_NAME = "jobs.db"
 
 
@@ -77,6 +79,7 @@ def init_db():
     except sqlite3.OperationalError:
         pass
 
+    initialize_strategic_theme_history(conn)
     conn.commit()
     conn.close()
 
