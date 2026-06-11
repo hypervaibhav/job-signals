@@ -18,7 +18,14 @@ from company_intelligence import (
     extract_skills as company_extract_skills,
 )
 
-from strategic_theme_history import save_theme_snapshot
+from market_intelligence import build_market_intelligence
+from strategic_theme_confidence import classify_theme_confidence
+from strategic_theme_history import (
+    get_latest_theme_snapshot,
+    get_theme_history,
+    save_theme_snapshot,
+)
+from strategic_theme_lifecycle import classify_theme_lifecycle
 from strategic_themes import calculate_theme_snapshot, detect_strategic_themes
 from company_history import (
     classify_company_trend,
@@ -399,6 +406,181 @@ def persist_strategic_theme_snapshot(
         themes,
         eligible_company_count=len(company_intelligence_rows),
     )
+
+
+def build_strategic_theme_market_rows(conn):
+    theme_rows = []
+
+    for latest_theme in get_latest_theme_snapshot(conn):
+        history = get_theme_history(conn, latest_theme["theme"])
+        lifecycle = classify_theme_lifecycle(history)
+        confidence = classify_theme_confidence(history, lifecycle)
+
+        theme_rows.append(
+            {
+                "theme": latest_theme["theme"],
+                "lifecycle": lifecycle,
+                "confidence": confidence,
+                "current_company_count": (
+                    history["current_company_count"] if history else 0
+                ),
+                "peak_company_count": (
+                    history["peak_company_count"] if history else 0
+                ),
+                "snapshots_active": (
+                    history["snapshots_active"] if history else 0
+                ),
+                "total_eligible_snapshots": (
+                    history["total_eligible_snapshots"] if history else 0
+                ),
+                "persistence_score": (
+                    history["persistence_score"] if history else 0
+                ),
+                "current_members": (
+                    history["current_companies"] if history else []
+                ),
+            }
+        )
+
+    theme_rows.sort(
+        key=lambda row: (
+            -row["current_company_count"],
+            row["theme"],
+        )
+    )
+    return theme_rows
+
+
+def build_signal_market_rows(skill_changes):
+    max_count = max((row[1] for row in skill_changes), default=0)
+    max_companies = max((row[3] for row in skill_changes), default=0)
+    max_positive_diff = max(
+        (row[2] for row in skill_changes if row[2] > 0),
+        default=0,
+    )
+
+    return [
+        {
+            "signal": signal,
+            "postings": count,
+            "change": diff,
+            "companies": companies,
+            "signal_strength": score,
+            "conviction": conviction,
+            "opportunity_score": calculate_opportunity_score(
+                count,
+                companies,
+                diff,
+                conviction,
+                max_count,
+                max_companies,
+                max_positive_diff,
+            ),
+        }
+        for signal, count, diff, companies, score, conviction in skill_changes
+    ]
+
+
+def build_category_market_rows(category_changes):
+    return [
+        {
+            "category": category,
+            "current_roles": count,
+            "change": diff,
+        }
+        for category, count, diff in category_changes
+    ]
+
+
+def build_company_market_rows(company_changes):
+    return [
+        {
+            "company": company,
+            "current_postings": count,
+            "change": diff,
+        }
+        for company, count, diff in company_changes
+    ]
+
+
+def build_market_intelligence_report_data(
+    conn,
+    latest_job_count,
+    previous_job_count,
+    net_change,
+    latest_source_mix,
+    previous_source_mix,
+    skill_changes,
+    category_changes,
+    company_changes,
+    company_intelligence_rows,
+):
+    evidence_confidence, evidence_confidence_reason = calculate_report_confidence(
+        net_change,
+        latest_job_count,
+        previous_job_count,
+        latest_source_mix,
+        previous_source_mix,
+    )
+
+    return build_market_intelligence(
+        latest_job_count=latest_job_count,
+        previous_job_count=previous_job_count,
+        net_change=net_change,
+        evidence_confidence=evidence_confidence,
+        evidence_confidence_reason=evidence_confidence_reason,
+        signal_rows=build_signal_market_rows(skill_changes),
+        category_changes=build_category_market_rows(category_changes),
+        company_changes=build_company_market_rows(company_changes),
+        company_intelligence_rows=company_intelligence_rows,
+        strategic_theme_rows=build_strategic_theme_market_rows(conn),
+    )
+
+
+def print_market_intelligence(market_intelligence):
+    print("\n--- MARKET INTELLIGENCE ---\n")
+    print(f"Market direction: {market_intelligence['market_direction']}")
+    print(
+        "Evidence confidence: "
+        f"{market_intelligence['evidence_confidence']['level']}"
+    )
+
+    top_signal = market_intelligence["top_signal"]
+    if top_signal:
+        print(f"Top signal: {top_signal['signal']}")
+    else:
+        print("Top signal: none")
+
+    strategy_mix = market_intelligence["company_strategy_mix"]
+    if strategy_mix:
+        print("Company strategy mix:")
+        for strategy, count in strategy_mix.items():
+            print(f"- {strategy}: {count}")
+    else:
+        print("Company strategy mix: none")
+
+    print("Strategic themes:")
+    if market_intelligence["strategic_themes"]:
+        for theme in market_intelligence["strategic_themes"]:
+            company_label = (
+                "company"
+                if theme["current_company_count"] == 1
+                else "companies"
+            )
+            print(
+                f"- {theme['theme']}: {theme['lifecycle']}, "
+                f"{theme['confidence']} confidence, "
+                f"{theme['current_company_count']} {company_label}"
+            )
+    else:
+        print("- none")
+
+    print(f"Market read: {market_intelligence['market_read']}")
+
+    if market_intelligence["caveats"]:
+        print("Caveats:")
+        for caveat in market_intelligence["caveats"]:
+            print(f"- {caveat}")
 
 
 def print_strategic_themes(company_intelligence_rows, limit=5):
@@ -795,6 +977,18 @@ def print_daily_report():
             latest_time,
             company_intelligence_rows,
         )
+        market_intelligence = build_market_intelligence_report_data(
+            conn,
+            latest_job_count=len(latest),
+            previous_job_count=len(previous),
+            net_change=net_change,
+            latest_source_mix=latest_source_mix,
+            previous_source_mix=previous_source_mix,
+            skill_changes=skill_changes,
+            category_changes=category_changes,
+            company_changes=company_changes,
+            company_intelligence_rows=company_intelligence_rows,
+        )
     finally:
         conn.close()
 
@@ -802,6 +996,7 @@ def print_daily_report():
     print_company_watchlist(latest)
     print_company_memory()
     print_strategic_themes(company_intelligence_rows)
+    print_market_intelligence(market_intelligence)
     print_company_intelligence_highlights(company_intelligence_rows)
 
     print("\n--- QUICK READ ---\n")

@@ -73,6 +73,17 @@ Focus:
 Reason:
 Strategic Theme History, Lifecycle, Readout, Narratives, and Historical Backfill are complete. The next step is improving confidence, acceleration, and market-level intelligence built on top of accumulated theme history.
 
+Status:
+Deferred pending additional historical theme data or a demonstrated Market Intelligence requirement.
+
+Rationale:
+Theme Acceleration is intended to measure momentum and change over time. Current theme history is still relatively young, and Confidence provides greater immediate intelligence value.
+
+Revisit when:
+
+* substantially more theme history has accumulated, or
+* Market Intelligence development reveals a concrete need for momentum detection.
+
 ---
 
 ## LATER

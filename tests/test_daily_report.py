@@ -340,6 +340,8 @@ class StrategicThemePersistenceIntegrationTests(unittest.TestCase):
             patch.object(daily_report, "print_company_watchlist"),
             patch.object(daily_report, "print_company_memory"),
             patch.object(daily_report, "print_strategic_themes"),
+            patch.object(daily_report, "build_market_intelligence_report_data"),
+            patch.object(daily_report, "print_market_intelligence"),
             patch.object(daily_report, "print_company_intelligence_highlights"),
             redirect_stdout(StringIO()),
         ):
@@ -389,6 +391,248 @@ class StrategicThemePersistenceIntegrationTests(unittest.TestCase):
                 "engineering investment around AI-enabled offerings.\n\n"
             ),
         )
+
+
+class MarketIntelligenceReportTests(unittest.TestCase):
+    def make_market_intelligence(self):
+        return {
+            "market_direction": "Flat",
+            "evidence_confidence": {
+                "level": "HIGH",
+                "reason": "Snapshot size and source mix are stable.",
+            },
+            "top_signal": {
+                "signal": "AI",
+                "postings": 82,
+            },
+            "company_strategy_mix": {
+                "AI Product Expansion": 3,
+                "Sales Expansion": 2,
+            },
+            "strategic_themes": [
+                {
+                    "theme": "AI Product Expansion",
+                    "lifecycle": "Emerging",
+                    "confidence": "Low",
+                    "current_company_count": 3,
+                },
+                {
+                    "theme": "AI Commercialization",
+                    "lifecycle": "Emerging",
+                    "confidence": "Low",
+                    "current_company_count": 1,
+                },
+            ],
+            "market_read": "The market is flat with HIGH evidence confidence.",
+            "caveats": [
+                "Net movement is small; treat direction as near-flat.",
+            ],
+        }
+
+    def test_market_intelligence_section_prints_structured_summary(self):
+        output = StringIO()
+
+        with redirect_stdout(output):
+            daily_report.print_market_intelligence(
+                self.make_market_intelligence()
+            )
+
+        self.assertEqual(
+            output.getvalue(),
+            (
+                "\n--- MARKET INTELLIGENCE ---\n\n"
+                "Market direction: Flat\n"
+                "Evidence confidence: HIGH\n"
+                "Top signal: AI\n"
+                "Company strategy mix:\n"
+                "- AI Product Expansion: 3\n"
+                "- Sales Expansion: 2\n"
+                "Strategic themes:\n"
+                "- AI Product Expansion: Emerging, Low confidence, "
+                "3 companies\n"
+                "- AI Commercialization: Emerging, Low confidence, "
+                "1 company\n"
+                "Market read: The market is flat with HIGH evidence "
+                "confidence.\n"
+                "Caveats:\n"
+                "- Net movement is small; treat direction as near-flat.\n"
+            ),
+        )
+
+    def test_market_intelligence_section_handles_empty_inputs(self):
+        output = StringIO()
+
+        with redirect_stdout(output):
+            daily_report.print_market_intelligence(
+                {
+                    "market_direction": "Flat",
+                    "evidence_confidence": {
+                        "level": "LOW",
+                        "reason": "Insufficient history",
+                    },
+                    "top_signal": None,
+                    "company_strategy_mix": {},
+                    "strategic_themes": [],
+                    "market_read": "No market read available.",
+                    "caveats": [],
+                }
+            )
+
+        self.assertIn("Top signal: none", output.getvalue())
+        self.assertIn("Company strategy mix: none", output.getvalue())
+        self.assertIn("Strategic themes:\n- none", output.getvalue())
+        self.assertNotIn("Caveats:", output.getvalue())
+
+    def test_report_adapter_delegates_to_market_intelligence_module(self):
+        conn = object()
+        skill_changes = [
+            ("AI", 8, 1, 4, 32, "HIGH"),
+            ("Frontend", 6, 0, 3, 18, "MEDIUM"),
+        ]
+        category_changes = [
+            ("Engineering", 10, 2),
+        ]
+        company_changes = [
+            ("Mistral", 10, 1),
+        ]
+        company_intelligence_rows = [
+            {
+                "company": "Integrate",
+                "intelligence": "AI Product Expansion",
+            }
+        ]
+        theme_rows = [
+            {
+                "theme": "AI Product Expansion",
+                "lifecycle": "Emerging",
+                "confidence": "Low",
+                "current_company_count": 1,
+            }
+        ]
+        expected_market = {"market_direction": "Expanding"}
+
+        with (
+            patch.object(
+                daily_report,
+                "calculate_report_confidence",
+                return_value=("HIGH", "Stable evidence."),
+            ) as calculate_confidence,
+            patch.object(
+                daily_report,
+                "build_strategic_theme_market_rows",
+                return_value=theme_rows,
+            ) as build_theme_rows,
+            patch.object(
+                daily_report,
+                "build_market_intelligence",
+                return_value=expected_market,
+                create=True,
+            ) as build_market,
+        ):
+            market = daily_report.build_market_intelligence_report_data(
+                conn,
+                latest_job_count=10,
+                previous_job_count=8,
+                net_change=2,
+                latest_source_mix={"lever": 10},
+                previous_source_mix={"lever": 8},
+                skill_changes=skill_changes,
+                category_changes=category_changes,
+                company_changes=company_changes,
+                company_intelligence_rows=company_intelligence_rows,
+            )
+
+        self.assertEqual(market, expected_market)
+        calculate_confidence.assert_called_once_with(
+            2,
+            10,
+            8,
+            {"lever": 10},
+            {"lever": 8},
+        )
+        build_theme_rows.assert_called_once_with(conn)
+        build_market.assert_called_once()
+        call_kwargs = build_market.call_args.kwargs
+        self.assertEqual(call_kwargs["latest_job_count"], 10)
+        self.assertEqual(call_kwargs["previous_job_count"], 8)
+        self.assertEqual(call_kwargs["net_change"], 2)
+        self.assertEqual(call_kwargs["evidence_confidence"], "HIGH")
+        self.assertEqual(call_kwargs["evidence_confidence_reason"], "Stable evidence.")
+        self.assertEqual(
+            call_kwargs["signal_rows"][0],
+            {
+                "signal": "AI",
+                "postings": 8,
+                "change": 1,
+                "companies": 4,
+                "signal_strength": 32,
+                "conviction": "HIGH",
+                "opportunity_score": 100,
+            },
+        )
+        self.assertEqual(
+            call_kwargs["category_changes"],
+            [
+                {
+                    "category": "Engineering",
+                    "current_roles": 10,
+                    "change": 2,
+                }
+            ],
+        )
+        self.assertEqual(
+            call_kwargs["company_changes"],
+            [
+                {
+                    "company": "Mistral",
+                    "current_postings": 10,
+                    "change": 1,
+                }
+            ],
+        )
+        self.assertIs(
+            call_kwargs["company_intelligence_rows"],
+            company_intelligence_rows,
+        )
+        self.assertIs(call_kwargs["strategic_theme_rows"], theme_rows)
+
+    def test_print_daily_report_prints_market_intelligence_section(self):
+        latest = [("AI Engineer", "Mistral", 200, "AI", "lever")]
+        previous = [("Engineer", "Mistral", 100, "", "lever")]
+        market = self.make_market_intelligence()
+
+        with (
+            patch.object(
+                daily_report,
+                "get_latest_two_snapshots",
+                return_value=(200, 100, latest, previous),
+            ),
+            patch.object(
+                daily_report,
+                "calculate_company_intelligence_rows",
+                return_value=[],
+            ),
+            patch.object(daily_report, "persist_strategic_theme_snapshot"),
+            patch.object(daily_report, "print_market_narrative"),
+            patch.object(daily_report, "print_opportunity_ranking"),
+            patch.object(daily_report, "print_signal_opportunities"),
+            patch.object(daily_report, "print_company_watchlist"),
+            patch.object(daily_report, "print_company_memory"),
+            patch.object(daily_report, "print_strategic_themes"),
+            patch.object(daily_report, "print_company_intelligence_highlights"),
+            patch.object(
+                daily_report,
+                "build_market_intelligence_report_data",
+                return_value=market,
+            ) as build_market_report_data,
+            redirect_stdout(StringIO()) as output,
+        ):
+            daily_report.print_daily_report()
+
+        build_market_report_data.assert_called_once()
+        self.assertIn("--- MARKET INTELLIGENCE ---", output.getvalue())
+        self.assertIn("Market direction: Flat", output.getvalue())
+        self.assertIn("Top signal: AI", output.getvalue())
 
 
 if __name__ == "__main__":
