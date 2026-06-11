@@ -88,6 +88,9 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "in 2 active snapshots out of 2 eligible snapshots, which is "
                 "fewer than the 3 active snapshots needed for an established "
                 "lifecycle. Current coverage is 2 companies.\n"
+                "Membership movement: Expanded membership\n"
+                "Entrants: Levelai\n"
+                "Exits: none\n"
                 "Persistence: 2/2 snapshots\n"
                 "Persistence score: 100.0%\n"
                 "Current company count: 2\n"
@@ -103,6 +106,9 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "in 2 active snapshots out of 2 eligible snapshots, which is "
                 "fewer than the 3 active snapshots needed for an established "
                 "lifecycle. Current coverage is 1 company.\n"
+                "Membership movement: No membership change\n"
+                "Entrants: none\n"
+                "Exits: none\n"
                 "Persistence: 2/2 snapshots\n"
                 "Persistence score: 100.0%\n"
                 "Current company count: 1\n"
@@ -370,6 +376,33 @@ class ThemeHistoryReportTests(unittest.TestCase):
         self.assertEqual(first_call.args[1]["theme"], "AI Product Expansion")
         self.assertIn("Explanation: Narrative text.\n", report)
 
+    def test_report_uses_theme_membership_change_helper(self):
+        self.save_sample_history()
+        module = self.report_module()
+
+        with mock.patch.object(
+            module,
+            "calculate_theme_membership_change",
+            return_value={
+                "movement_label": "Rotated membership",
+                "entrants": ["Ryzlabs"],
+                "exits": ["Integrate"],
+            },
+            create=True,
+        ) as calculate_membership_change:
+            report = module.build_theme_history_report(self.conn)
+
+        self.assertTrue(
+            calculate_membership_change.call_args_list,
+            "theme_history_report.py should call "
+            "calculate_theme_membership_change(history)",
+        )
+        first_call = calculate_membership_change.call_args_list[0]
+        self.assertEqual(first_call.args[0]["theme"], "AI Product Expansion")
+        self.assertIn("Membership movement: Rotated membership\n", report)
+        self.assertIn("Entrants: Ryzlabs\n", report)
+        self.assertIn("Exits: Integrate\n", report)
+
     def test_report_prints_stable_lifecycle(self):
         strategic_theme_history.save_theme_snapshot(
             self.conn,
@@ -546,6 +579,9 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "in 1 active snapshot out of 1 eligible snapshot, which is "
                 "fewer than the 3 active snapshots needed for an established "
                 "lifecycle. Current coverage is 1 company.\n"
+                "Membership movement: Insufficient history\n"
+                "Entrants: none\n"
+                "Exits: none\n"
                 "Persistence: 1/1 snapshots\n"
                 "Persistence score: 100.0%\n"
                 "Current company count: 1\n"

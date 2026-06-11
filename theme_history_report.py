@@ -8,6 +8,7 @@ from strategic_theme_lifecycle import (
     has_presentable_theme_activity,
 )
 from strategic_theme_history import get_theme_history
+from strategic_theme_membership import calculate_theme_membership_change
 from strategic_theme_narratives import generate_theme_lifecycle_narrative
 
 
@@ -41,12 +42,16 @@ def _format_theme_history(history):
     lifecycle = classify_theme_lifecycle(history)
     confidence = classify_theme_confidence(history, lifecycle)
     narrative = generate_theme_lifecycle_narrative(lifecycle, history)
+    membership_change = calculate_theme_membership_change(history)
 
     return (
         f"{history['theme']}\n"
         f"Lifecycle: {lifecycle}\n"
         f"Theme Confidence: {confidence}\n"
         f"Explanation: {narrative}\n"
+        f"Membership movement: {membership_change['movement_label']}\n"
+        f"Entrants: {_format_members(membership_change['entrants'])}\n"
+        f"Exits: {_format_members(membership_change['exits'])}\n"
         f"Persistence: {history['snapshots_active']}/"
         f"{history['total_eligible_snapshots']} snapshots\n"
         f"Persistence score: {history['persistence_score'] * 100:.1f}%\n"
