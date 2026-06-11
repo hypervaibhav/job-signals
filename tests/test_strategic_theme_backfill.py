@@ -22,11 +22,17 @@ def make_complete_snapshot(
     commercialization=None,
     product=None,
     research=None,
+    revenue=None,
+    engineering=None,
+    data=None,
 ):
     return [
         make_theme("AI Commercialization", commercialization or []),
         make_theme("AI Product Expansion", product or []),
         make_theme("AI Research Expansion", research or []),
+        make_theme("Revenue / GTM Expansion", revenue or []),
+        make_theme("Engineering Platform Expansion", engineering or []),
+        make_theme("Data & Analytics Investment", data or []),
     ]
 
 
@@ -257,6 +263,33 @@ class StrategicThemeBackfillCharacterizationTests(unittest.TestCase):
                     "eligible_company_count": 1,
                     "companies": [],
                 },
+                {
+                    "snapshot_time": 100,
+                    "scope": "watchlist",
+                    "engine_version": "v2-backfill",
+                    "theme": "Data & Analytics Investment",
+                    "company_count": 0,
+                    "eligible_company_count": 1,
+                    "companies": [],
+                },
+                {
+                    "snapshot_time": 100,
+                    "scope": "watchlist",
+                    "engine_version": "v2-backfill",
+                    "theme": "Engineering Platform Expansion",
+                    "company_count": 0,
+                    "eligible_company_count": 1,
+                    "companies": [],
+                },
+                {
+                    "snapshot_time": 100,
+                    "scope": "watchlist",
+                    "engine_version": "v2-backfill",
+                    "theme": "Revenue / GTM Expansion",
+                    "company_count": 0,
+                    "eligible_company_count": 1,
+                    "companies": [],
+                },
             ],
         )
 
@@ -389,7 +422,7 @@ class StrategicThemeBackfillCharacterizationTests(unittest.TestCase):
             """
         ).fetchone()[0]
 
-        self.assertEqual(snapshot_count, 3)
+        self.assertEqual(snapshot_count, 6)
         self.assertEqual(membership_count, 1)
 
     def test_empty_job_snapshots_succeeds_without_writing_theme_history(self):
@@ -459,4 +492,3 @@ class StrategicThemeBackfillCharacterizationTests(unittest.TestCase):
             save_snapshot.call_args.kwargs["eligible_company_count"],
             1,
         )
-

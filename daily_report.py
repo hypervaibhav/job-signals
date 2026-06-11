@@ -25,7 +25,10 @@ from strategic_theme_history import (
     get_theme_history,
     save_theme_snapshot,
 )
-from strategic_theme_lifecycle import classify_theme_lifecycle
+from strategic_theme_lifecycle import (
+    classify_theme_lifecycle,
+    has_presentable_theme_activity,
+)
 from strategic_themes import calculate_theme_snapshot, detect_strategic_themes
 from company_history import (
     classify_company_trend,
@@ -413,6 +416,10 @@ def build_strategic_theme_market_rows(conn):
 
     for latest_theme in get_latest_theme_snapshot(conn):
         history = get_theme_history(conn, latest_theme["theme"])
+
+        if not has_presentable_theme_activity(history):
+            continue
+
         lifecycle = classify_theme_lifecycle(history)
         confidence = classify_theme_confidence(history, lifecycle)
 

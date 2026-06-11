@@ -67,6 +67,10 @@ class StrategicThemeLifecycleTests(unittest.TestCase):
         module = self.lifecycle_module()
         self.assertEqual(module.classify_theme_lifecycle(history), expected)
 
+    def assert_presentable(self, expected, history):
+        module = self.lifecycle_module()
+        self.assertEqual(module.has_presentable_theme_activity(history), expected)
+
     def test_missing_history_returns_none(self):
         self.assert_lifecycle(None, None)
 
@@ -75,6 +79,35 @@ class StrategicThemeLifecycleTests(unittest.TestCase):
             "Stable",
             make_history([
                 make_snapshot(100, 0),
+                make_snapshot(200, 0),
+            ]),
+        )
+
+    def test_missing_history_is_not_presentable(self):
+        self.assert_presentable(False, None)
+
+    def test_never_detected_zero_count_theme_is_not_presentable(self):
+        self.assert_presentable(
+            False,
+            make_history([
+                make_snapshot(100, 0),
+                make_snapshot(200, 0),
+            ]),
+        )
+
+    def test_currently_active_theme_is_presentable(self):
+        self.assert_presentable(
+            True,
+            make_history([
+                make_snapshot(100, 1, ["Integrate"]),
+            ]),
+        )
+
+    def test_disappeared_theme_with_prior_activity_is_presentable(self):
+        self.assert_presentable(
+            True,
+            make_history([
+                make_snapshot(100, 1, ["Integrate"]),
                 make_snapshot(200, 0),
             ]),
         )

@@ -3,7 +3,10 @@ import sys
 from datetime import datetime
 
 from strategic_theme_confidence import classify_theme_confidence
-from strategic_theme_lifecycle import classify_theme_lifecycle
+from strategic_theme_lifecycle import (
+    classify_theme_lifecycle,
+    has_presentable_theme_activity,
+)
 from strategic_theme_history import get_theme_history
 from strategic_theme_narratives import generate_theme_lifecycle_narrative
 
@@ -73,6 +76,19 @@ def build_theme_history_report(conn, scope="watchlist", engine_version="v2"):
             "STRATEGIC THEME HISTORY\n"
             "\n"
             "No strategic theme history found.\n"
+        )
+
+    histories = [
+        history
+        for history in histories
+        if has_presentable_theme_activity(history)
+    ]
+
+    if not histories:
+        return (
+            "STRATEGIC THEME HISTORY\n"
+            "\n"
+            "No active strategic themes found.\n"
         )
 
     histories.sort(

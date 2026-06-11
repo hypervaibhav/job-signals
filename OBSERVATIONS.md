@@ -30,6 +30,11 @@ Customer Fit Observations
 - Investor appears promising but likely requires longer historical coverage.
 - Recruiter has some fit but may pull the product toward recruiting workflows.
 - Job seeker appears least aligned with the current product direction.
+
+Strategic Theme Expansion improved report quality more than expected.
+
+Archetype-backed themes appear significantly more useful than category-derived themes.
+
 ⸻
 
 2026-06-12

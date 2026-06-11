@@ -45,11 +45,39 @@ class StrategicThemesV1CharacterizationTests(unittest.TestCase):
 
         self.assertEqual(themes[0]["theme"], "AI Research Expansion")
 
+    def test_sales_expansion_archetype_maps_to_revenue_gtm_expansion(self):
+        themes = detect_strategic_themes(
+            [
+                make_row("Stripe", "Sales Expansion"),
+                make_row("Reddit", "Sales Expansion"),
+            ]
+        )
+
+        self.assertEqual(themes[0]["theme"], "Revenue / GTM Expansion")
+
+    def test_engineering_platform_expansion_archetype_maps_to_engineering_theme(self):
+        themes = detect_strategic_themes(
+            [
+                make_row("LawnStarter", "Engineering Platform Expansion"),
+                make_row("Alluxio", "Engineering Platform Expansion"),
+            ]
+        )
+
+        self.assertEqual(themes[0]["theme"], "Engineering Platform Expansion")
+
+    def test_data_analytics_expansion_archetype_maps_to_data_investment(self):
+        themes = detect_strategic_themes(
+            [
+                make_row("Discord", "Data / Analytics Expansion"),
+                make_row("TELUS Digital", "Data / Analytics Expansion"),
+            ]
+        )
+
+        self.assertEqual(themes[0]["theme"], "Data & Analytics Investment")
+
     def test_unknown_archetypes_are_ignored(self):
         themes = detect_strategic_themes(
             [
-                make_row("Acme", "Sales Expansion"),
-                make_row("Beta", "Sales Expansion"),
                 make_row("Gamma", "Unknown Expansion"),
             ]
         )
@@ -140,6 +168,18 @@ class StrategicThemesV1CharacterizationTests(unittest.TestCase):
                 "Companies continue investing in research-oriented hiring, suggesting "
                 "ongoing model, platform, or capability development."
             ),
+            "Revenue / GTM Expansion": (
+                "Companies appear to be expanding revenue, sales, "
+                "partnerships, or go-to-market capacity."
+            ),
+            "Engineering Platform Expansion": (
+                "Companies appear to be expanding engineering, "
+                "infrastructure, or platform capacity."
+            ),
+            "Data & Analytics Investment": (
+                "Companies appear to be investing in data, analytics, "
+                "or business intelligence capacity."
+            ),
         }
 
         for theme_name, expected in expected_narratives.items():
@@ -161,6 +201,8 @@ class StrategicThemesV1CharacterizationTests(unittest.TestCase):
                 make_row("Commercial A", "AI Commercialization / GTM Expansion"),
                 make_row("Commercial B", "AI Commercialization / GTM Expansion"),
                 make_row("Commercial C", "AI Commercialization / GTM Expansion"),
+                make_row("Revenue A", "Sales Expansion"),
+                make_row("Revenue B", "Sales Expansion"),
             ]
         )
 
@@ -170,6 +212,7 @@ class StrategicThemesV1CharacterizationTests(unittest.TestCase):
                 ("AI Product Expansion", 4),
                 ("AI Commercialization", 3),
                 ("AI Research Expansion", 2),
+                ("Revenue / GTM Expansion", 2),
             ],
         )
 
@@ -182,6 +225,8 @@ class StrategicThemesV1CharacterizationTests(unittest.TestCase):
                 make_row("Product A", "AI Product Expansion"),
                 make_row("Commercial B", "AI Commercialization / GTM Expansion"),
                 make_row("Commercial A", "AI Commercialization / GTM Expansion"),
+                make_row("Revenue B", "Sales Expansion"),
+                make_row("Revenue A", "Sales Expansion"),
             ]
         )
 
@@ -191,6 +236,7 @@ class StrategicThemesV1CharacterizationTests(unittest.TestCase):
                 "AI Research Expansion",
                 "AI Product Expansion",
                 "AI Commercialization",
+                "Revenue / GTM Expansion",
             ],
         )
 
@@ -243,7 +289,13 @@ class ThemeSnapshotCalculationTests(unittest.TestCase):
         ]
         self.assertEqual(
             zero_count_themes,
-            ["AI Commercialization", "AI Research Expansion"],
+            [
+                "AI Commercialization",
+                "AI Research Expansion",
+                "Revenue / GTM Expansion",
+                "Engineering Platform Expansion",
+                "Data & Analytics Investment",
+            ],
         )
         for theme in themes:
             if theme["company_count"] == 0:

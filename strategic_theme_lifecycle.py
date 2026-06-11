@@ -49,3 +49,13 @@ def classify_theme_lifecycle(history):
         return "Contracting"
 
     return "Stable"
+
+
+def has_presentable_theme_activity(history):
+    if history is None:
+        return False
+
+    return (
+        history["current_company_count"] > 0
+        or history["snapshots_active"] > 0
+    )

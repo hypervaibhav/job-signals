@@ -70,7 +70,7 @@ class ThemeHistoryReportTests(unittest.TestCase):
             eligible_company_count=3,
         )
 
-    def test_report_prints_complete_sorted_theme_history(self):
+    def test_report_prints_active_sorted_theme_history(self):
         self.save_sample_history()
         module = self.report_module()
 
@@ -110,23 +110,10 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 f"First seen: {format_expected_timestamp(100)}\n"
                 f"Latest seen: {format_expected_timestamp(200)}\n"
                 "Current members: Mistral\n"
-                "\n"
-                "AI Research Expansion\n"
-                "Lifecycle: Stable\n"
-                "Theme Confidence: Low\n"
-                "Explanation: AI Research Expansion has not matched any "
-                "companies across 2 eligible snapshots.\n"
-                "Persistence: 0/2 snapshots\n"
-                "Persistence score: 0.0%\n"
-                "Current company count: 0\n"
-                "Peak company count: 0\n"
-                "First seen: never\n"
-                "Latest seen: never\n"
-                "Current members: none\n"
             ),
         )
 
-    def test_report_includes_singleton_and_zero_count_themes(self):
+    def test_report_includes_singletons_and_suppresses_never_detected_zero_count_themes(self):
         self.save_sample_history()
         module = self.report_module()
 
@@ -134,9 +121,35 @@ class ThemeHistoryReportTests(unittest.TestCase):
 
         self.assertIn("AI Commercialization", report)
         self.assertIn("Current company count: 1", report)
-        self.assertIn("AI Research Expansion", report)
-        self.assertIn("Current company count: 0", report)
-        self.assertIn("Current members: none", report)
+        self.assertNotIn("AI Research Expansion", report)
+        self.assertNotIn("Current company count: 0", report)
+        self.assertNotIn("Current members: none", report)
+
+    def test_report_suppresses_new_zero_company_themes(self):
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            100,
+            [
+                make_theme("Data & Analytics Investment", []),
+                make_theme("Engineering Platform Expansion", []),
+            ],
+            eligible_company_count=3,
+        )
+        module = self.report_module()
+
+        report = module.build_theme_history_report(self.conn)
+
+        self.assertEqual(
+            report,
+            (
+                "STRATEGIC THEME HISTORY\n"
+                "\n"
+                "No active strategic themes found.\n"
+            ),
+        )
+        self.assertNotIn("Data & Analytics Investment", report)
+        self.assertNotIn("Engineering Platform Expansion", report)
+        self.assertNotIn("Stable, Low confidence, 0 companies", report)
 
     def test_report_formats_first_seen_as_human_readable_timestamp(self):
         first_seen = 1781198700
@@ -216,7 +229,7 @@ class ThemeHistoryReportTests(unittest.TestCase):
 
         self.assertIn("AI Product Expansion\nLifecycle: Emerging\n", report)
         self.assertIn("AI Commercialization\nLifecycle: Emerging\n", report)
-        self.assertIn("AI Research Expansion\nLifecycle: Stable\n", report)
+        self.assertNotIn("AI Research Expansion\nLifecycle: Stable\n", report)
 
     def test_report_prints_theme_confidence_after_lifecycle(self):
         self.save_sample_history()
@@ -269,8 +282,8 @@ class ThemeHistoryReportTests(unittest.TestCase):
         report = module.build_theme_history_report(self.conn)
 
         self.assertIn(
-            "AI Research Expansion\n"
-            "Lifecycle: Stable\n"
+            "AI Commercialization\n"
+            "Lifecycle: Emerging\n"
             "Theme Confidence: Low\n",
             report,
         )
@@ -474,10 +487,6 @@ class ThemeHistoryReportTests(unittest.TestCase):
             report.index("AI Product Expansion\n"),
             report.index("AI Commercialization\n"),
         )
-        self.assertLess(
-            report.index("AI Commercialization\n"),
-            report.index("AI Research Expansion\n"),
-        )
 
     def test_lifecycle_does_not_change_persistence_and_count_output(self):
         self.save_sample_history()
@@ -544,32 +553,6 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 f"First seen: {format_expected_timestamp(100)}\n"
                 f"Latest seen: {format_expected_timestamp(100)}\n"
                 "Current members: Integrate\n"
-                "\n"
-                "AI Commercialization\n"
-                "Lifecycle: Stable\n"
-                "Theme Confidence: Low\n"
-                "Explanation: AI Commercialization has not matched any "
-                "companies across 1 eligible snapshot.\n"
-                "Persistence: 0/1 snapshots\n"
-                "Persistence score: 0.0%\n"
-                "Current company count: 0\n"
-                "Peak company count: 0\n"
-                "First seen: never\n"
-                "Latest seen: never\n"
-                "Current members: none\n"
-                "\n"
-                "AI Research Expansion\n"
-                "Lifecycle: Stable\n"
-                "Theme Confidence: Low\n"
-                "Explanation: AI Research Expansion has not matched any "
-                "companies across 1 eligible snapshot.\n"
-                "Persistence: 0/1 snapshots\n"
-                "Persistence score: 0.0%\n"
-                "Current company count: 0\n"
-                "Peak company count: 0\n"
-                "First seen: never\n"
-                "Latest seen: never\n"
-                "Current members: none\n"
                 "\n"
             ),
         )

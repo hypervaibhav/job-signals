@@ -596,6 +596,80 @@ class MarketIntelligenceReportTests(unittest.TestCase):
         )
         self.assertIs(call_kwargs["strategic_theme_rows"], theme_rows)
 
+    def test_strategic_theme_market_rows_suppress_never_detected_zero_company_themes(self):
+        conn = sqlite3.connect(":memory:")
+        try:
+            strategic_theme_history.initialize_strategic_theme_history(conn)
+            strategic_theme_history.save_theme_snapshot(
+                conn,
+                100,
+                [
+                    {
+                        "theme": "AI Product Expansion",
+                        "company_count": 1,
+                        "companies": ["Integrate"],
+                    },
+                    {
+                        "theme": "Data & Analytics Investment",
+                        "company_count": 0,
+                        "companies": [],
+                    },
+                    {
+                        "theme": "Engineering Platform Expansion",
+                        "company_count": 0,
+                        "companies": [],
+                    },
+                ],
+                eligible_company_count=3,
+            )
+
+            rows = daily_report.build_strategic_theme_market_rows(conn)
+        finally:
+            conn.close()
+
+        self.assertEqual(
+            [row["theme"] for row in rows],
+            ["AI Product Expansion"],
+        )
+
+    def test_strategic_theme_market_rows_keep_disappeared_themes_with_prior_activity(self):
+        conn = sqlite3.connect(":memory:")
+        try:
+            strategic_theme_history.initialize_strategic_theme_history(conn)
+            strategic_theme_history.save_theme_snapshot(
+                conn,
+                100,
+                [
+                    {
+                        "theme": "AI Product Expansion",
+                        "company_count": 1,
+                        "companies": ["Integrate"],
+                    },
+                ],
+                eligible_company_count=3,
+            )
+            strategic_theme_history.save_theme_snapshot(
+                conn,
+                200,
+                [
+                    {
+                        "theme": "AI Product Expansion",
+                        "company_count": 0,
+                        "companies": [],
+                    },
+                ],
+                eligible_company_count=3,
+            )
+
+            rows = daily_report.build_strategic_theme_market_rows(conn)
+        finally:
+            conn.close()
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["theme"], "AI Product Expansion")
+        self.assertEqual(rows[0]["lifecycle"], "Disappeared")
+        self.assertEqual(rows[0]["current_company_count"], 0)
+
     def test_print_daily_report_prints_market_intelligence_section(self):
         latest = [("AI Engineer", "Mistral", 200, "AI", "lever")]
         previous = [("Engineer", "Mistral", 100, "", "lever")]

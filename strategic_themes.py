@@ -22,6 +22,24 @@ THEME_DEFINITIONS = {
             "suggesting ongoing model, platform, or capability development."
         )
     },
+    "Revenue / GTM Expansion": {
+        "description": (
+            "Companies appear to be expanding revenue, sales, "
+            "partnerships, or go-to-market capacity."
+        )
+    },
+    "Engineering Platform Expansion": {
+        "description": (
+            "Companies appear to be expanding engineering, "
+            "infrastructure, or platform capacity."
+        )
+    },
+    "Data & Analytics Investment": {
+        "description": (
+            "Companies appear to be investing in data, analytics, "
+            "or business intelligence capacity."
+        )
+    },
 }
 
 
@@ -29,6 +47,9 @@ LABEL_TO_THEME = {
     "AI Commercialization / GTM Expansion": "AI Commercialization",
     "AI Product Expansion": "AI Product Expansion",
     "AI Research Expansion": "AI Research Expansion",
+    "Sales Expansion": "Revenue / GTM Expansion",
+    "Engineering Platform Expansion": "Engineering Platform Expansion",
+    "Data / Analytics Expansion": "Data & Analytics Investment",
 }
 
 
