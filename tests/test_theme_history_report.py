@@ -76,6 +76,7 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "STRATEGIC THEME HISTORY\n"
                 "\n"
                 "AI Product Expansion\n"
+                "Lifecycle: Emerging\n"
                 "Persistence: 2/2 snapshots\n"
                 "Persistence score: 100.0%\n"
                 "Current company count: 2\n"
@@ -85,6 +86,7 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "Current members: Integrate, Levelai\n"
                 "\n"
                 "AI Commercialization\n"
+                "Lifecycle: Emerging\n"
                 "Persistence: 2/2 snapshots\n"
                 "Persistence score: 100.0%\n"
                 "Current company count: 1\n"
@@ -94,6 +96,7 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "Current members: Mistral\n"
                 "\n"
                 "AI Research Expansion\n"
+                "Lifecycle: Stable\n"
                 "Persistence: 0/2 snapshots\n"
                 "Persistence score: 0.0%\n"
                 "Current company count: 0\n"
@@ -115,6 +118,149 @@ class ThemeHistoryReportTests(unittest.TestCase):
         self.assertIn("AI Research Expansion", report)
         self.assertIn("Current company count: 0", report)
         self.assertIn("Current members: none", report)
+
+    def test_report_includes_lifecycle_for_each_theme(self):
+        self.save_sample_history()
+        module = self.report_module()
+
+        report = module.build_theme_history_report(self.conn)
+
+        self.assertIn("AI Product Expansion\nLifecycle: Emerging\n", report)
+        self.assertIn("AI Commercialization\nLifecycle: Emerging\n", report)
+        self.assertIn("AI Research Expansion\nLifecycle: Stable\n", report)
+
+    def test_report_prints_stable_lifecycle(self):
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            100,
+            make_complete_snapshot(product=["Integrate"]),
+            eligible_company_count=3,
+        )
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            200,
+            make_complete_snapshot(product=["Integrate"]),
+            eligible_company_count=3,
+        )
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            300,
+            make_complete_snapshot(product=["Integrate"]),
+            eligible_company_count=3,
+        )
+        module = self.report_module()
+
+        report = module.build_theme_history_report(self.conn)
+
+        self.assertIn("AI Product Expansion\nLifecycle: Stable\n", report)
+
+    def test_report_prints_emerging_lifecycle(self):
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            100,
+            make_complete_snapshot(product=["Integrate"]),
+            eligible_company_count=3,
+        )
+        module = self.report_module()
+
+        report = module.build_theme_history_report(self.conn)
+
+        self.assertIn("AI Product Expansion\nLifecycle: Emerging\n", report)
+
+    def test_report_prints_expanding_lifecycle(self):
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            100,
+            make_complete_snapshot(product=["Integrate"]),
+            eligible_company_count=3,
+        )
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            200,
+            make_complete_snapshot(product=["Integrate"]),
+            eligible_company_count=3,
+        )
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            300,
+            make_complete_snapshot(product=["Integrate", "Levelai"]),
+            eligible_company_count=3,
+        )
+        module = self.report_module()
+
+        report = module.build_theme_history_report(self.conn)
+
+        self.assertIn("AI Product Expansion\nLifecycle: Expanding\n", report)
+
+    def test_report_prints_contracting_lifecycle(self):
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            100,
+            make_complete_snapshot(product=["Integrate", "Levelai"]),
+            eligible_company_count=3,
+        )
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            200,
+            make_complete_snapshot(product=["Integrate", "Levelai"]),
+            eligible_company_count=3,
+        )
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            300,
+            make_complete_snapshot(product=["Integrate"]),
+            eligible_company_count=3,
+        )
+        module = self.report_module()
+
+        report = module.build_theme_history_report(self.conn)
+
+        self.assertIn("AI Product Expansion\nLifecycle: Contracting\n", report)
+
+    def test_report_prints_disappeared_lifecycle(self):
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            100,
+            make_complete_snapshot(product=["Integrate"]),
+            eligible_company_count=3,
+        )
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            200,
+            make_complete_snapshot(),
+            eligible_company_count=3,
+        )
+        module = self.report_module()
+
+        report = module.build_theme_history_report(self.conn)
+
+        self.assertIn("AI Product Expansion\nLifecycle: Disappeared\n", report)
+
+    def test_lifecycle_does_not_change_sort_order(self):
+        self.save_sample_history()
+        module = self.report_module()
+
+        report = module.build_theme_history_report(self.conn)
+
+        self.assertLess(
+            report.index("AI Product Expansion\n"),
+            report.index("AI Commercialization\n"),
+        )
+        self.assertLess(
+            report.index("AI Commercialization\n"),
+            report.index("AI Research Expansion\n"),
+        )
+
+    def test_lifecycle_does_not_change_persistence_and_count_output(self):
+        self.save_sample_history()
+        module = self.report_module()
+
+        report = module.build_theme_history_report(self.conn)
+
+        self.assertIn("Persistence: 2/2 snapshots\n", report)
+        self.assertIn("Persistence score: 100.0%\n", report)
+        self.assertIn("Current company count: 2\n", report)
+        self.assertIn("Peak company count: 2\n", report)
 
     def test_report_empty_state_is_clear(self):
         module = self.report_module()
@@ -157,6 +303,7 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "STRATEGIC THEME HISTORY\n"
                 "\n"
                 "AI Product Expansion\n"
+                "Lifecycle: Emerging\n"
                 "Persistence: 1/1 snapshots\n"
                 "Persistence score: 100.0%\n"
                 "Current company count: 1\n"
@@ -166,6 +313,7 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "Current members: Integrate\n"
                 "\n"
                 "AI Commercialization\n"
+                "Lifecycle: Stable\n"
                 "Persistence: 0/1 snapshots\n"
                 "Persistence score: 0.0%\n"
                 "Current company count: 0\n"
@@ -175,6 +323,7 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "Current members: none\n"
                 "\n"
                 "AI Research Expansion\n"
+                "Lifecycle: Stable\n"
                 "Persistence: 0/1 snapshots\n"
                 "Persistence score: 0.0%\n"
                 "Current company count: 0\n"
