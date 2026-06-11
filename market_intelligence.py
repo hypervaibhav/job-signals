@@ -1,12 +1,20 @@
 from collections import Counter
 
 
-def _market_direction(net_change):
+def classify_market_direction(net_change, previous_job_count):
+    change_ratio = abs(net_change) / max(previous_job_count, 1)
+
+    if (
+        net_change == 0
+        or abs(net_change) < 3
+        or change_ratio < 0.02
+    ):
+        return "Flat"
+
     if net_change > 0:
         return "Expanding"
-    if net_change < 0:
-        return "Contracting"
-    return "Flat"
+
+    return "Contracting"
 
 
 def _row_value(row, key, default=None):
@@ -170,7 +178,7 @@ def build_market_intelligence(
     company_intelligence_rows,
     strategic_theme_rows,
 ):
-    direction = _market_direction(net_change)
+    direction = classify_market_direction(net_change, previous_job_count)
     top_signal = _top_signal(signal_rows)
     themes = list(strategic_theme_rows)
 

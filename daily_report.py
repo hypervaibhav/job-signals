@@ -18,7 +18,10 @@ from company_intelligence import (
     extract_skills as company_extract_skills,
 )
 
-from market_intelligence import build_market_intelligence
+from market_intelligence import (
+    build_market_intelligence,
+    classify_market_direction,
+)
 from strategic_theme_confidence import classify_theme_confidence
 from strategic_theme_history import (
     get_latest_theme_snapshot,
@@ -823,10 +826,20 @@ def print_market_narrative(net_change, category_changes, company_changes, skill_
     print(f"Confidence: {confidence}")
     print(f"Reason: {reason}\n")
 
-    if net_change > 0:
+    market_direction = classify_market_direction(
+        net_change,
+        CURRENT_PREVIOUS_JOBS,
+    )
+
+    if market_direction == "Expanding":
         print(f"Market direction: expanding (+{net_change} net jobs).")
-    elif net_change < 0:
+    elif market_direction == "Contracting":
         print(f"Market direction: contracting ({net_change} net jobs).")
+    elif net_change != 0:
+        print(
+            "Market direction: flat; net change of "
+            f"{net_change:+} jobs is below the materiality threshold."
+        )
     else:
         print("Market direction: flat between the latest two snapshots.")
 

@@ -85,7 +85,7 @@ class MarketIntelligenceTests(unittest.TestCase):
         self.assertEqual(intelligence["market_direction"], "Expanding")
 
     def test_contracting_market_direction(self):
-        intelligence = build_market(net_change=-2)
+        intelligence = build_market(net_change=-3)
 
         self.assertEqual(intelligence["market_direction"], "Contracting")
 
@@ -93,6 +93,51 @@ class MarketIntelligenceTests(unittest.TestCase):
         intelligence = build_market(net_change=0)
 
         self.assertEqual(intelligence["market_direction"], "Flat")
+
+    def test_one_job_increase_out_of_152_is_flat(self):
+        intelligence = build_market(
+            previous_job_count=152,
+            latest_job_count=153,
+            net_change=1,
+        )
+
+        self.assertEqual(intelligence["market_direction"], "Flat")
+
+    def test_change_below_absolute_threshold_is_flat(self):
+        intelligence = build_market(
+            previous_job_count=50,
+            latest_job_count=52,
+            net_change=2,
+        )
+
+        self.assertEqual(intelligence["market_direction"], "Flat")
+
+    def test_change_below_percentage_threshold_is_flat(self):
+        intelligence = build_market(
+            previous_job_count=152,
+            latest_job_count=155,
+            net_change=3,
+        )
+
+        self.assertEqual(intelligence["market_direction"], "Flat")
+
+    def test_material_positive_change_is_expanding(self):
+        intelligence = build_market(
+            previous_job_count=152,
+            latest_job_count=156,
+            net_change=4,
+        )
+
+        self.assertEqual(intelligence["market_direction"], "Expanding")
+
+    def test_material_negative_change_is_contracting(self):
+        intelligence = build_market(
+            previous_job_count=152,
+            latest_job_count=148,
+            net_change=-4,
+        )
+
+        self.assertEqual(intelligence["market_direction"], "Contracting")
 
     def test_top_signal_prefers_highest_opportunity_score(self):
         intelligence = build_market(
@@ -246,7 +291,7 @@ class MarketIntelligenceTests(unittest.TestCase):
 
         self.assertEqual(
             intelligence["market_read"],
-            "The market is expanding with HIGH evidence confidence. AI is "
+            "The market is flat with HIGH evidence confidence. AI is "
             "the strongest current signal. Strategic theme coverage is led "
             "by AI Product Expansion.",
         )

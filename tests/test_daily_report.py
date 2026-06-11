@@ -596,6 +596,40 @@ class MarketIntelligenceReportTests(unittest.TestCase):
         )
         self.assertIs(call_kwargs["strategic_theme_rows"], theme_rows)
 
+    def test_market_narrative_uses_materiality_aware_direction(self):
+        previous_latest_jobs = daily_report.CURRENT_LATEST_JOBS
+        previous_previous_jobs = daily_report.CURRENT_PREVIOUS_JOBS
+        previous_latest_source_mix = daily_report.CURRENT_LATEST_SOURCE_MIX
+        previous_previous_source_mix = daily_report.CURRENT_PREVIOUS_SOURCE_MIX
+
+        daily_report.CURRENT_LATEST_JOBS = 153
+        daily_report.CURRENT_PREVIOUS_JOBS = 152
+        daily_report.CURRENT_LATEST_SOURCE_MIX = {"lever": 153}
+        daily_report.CURRENT_PREVIOUS_SOURCE_MIX = {"lever": 152}
+
+        output = StringIO()
+
+        try:
+            with redirect_stdout(output):
+                daily_report.print_market_narrative(
+                    1,
+                    category_changes=[],
+                    company_changes=[],
+                    skill_changes=[],
+                )
+        finally:
+            daily_report.CURRENT_LATEST_JOBS = previous_latest_jobs
+            daily_report.CURRENT_PREVIOUS_JOBS = previous_previous_jobs
+            daily_report.CURRENT_LATEST_SOURCE_MIX = previous_latest_source_mix
+            daily_report.CURRENT_PREVIOUS_SOURCE_MIX = previous_previous_source_mix
+
+        self.assertIn(
+            "Market direction: flat; net change of +1 jobs is below "
+            "the materiality threshold.",
+            output.getvalue(),
+        )
+        self.assertNotIn("Market direction: expanding (+1 net jobs).", output.getvalue())
+
     def test_strategic_theme_market_rows_suppress_never_detected_zero_company_themes(self):
         conn = sqlite3.connect(":memory:")
         try:
