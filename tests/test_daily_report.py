@@ -483,6 +483,27 @@ class MarketIntelligenceReportTests(unittest.TestCase):
         self.assertIn("Strategic themes:\n- none", output.getvalue())
         self.assertNotIn("Caveats:", output.getvalue())
 
+    def test_quick_read_uses_market_intelligence_summary_fields(self):
+        output = StringIO()
+
+        with redirect_stdout(output):
+            daily_report.print_quick_read(self.make_market_intelligence())
+
+        self.assertEqual(
+            output.getvalue(),
+            (
+                "\n--- QUICK READ ---\n\n"
+                "* Market is flat with HIGH evidence confidence.\n"
+                "* AI remains the strongest current signal.\n"
+                "* AI Product Expansion is the leading strategic theme.\n"
+                "* Strategic theme confidence remains early; "
+                "interpret theme movement cautiously.\n"
+            ),
+        )
+        self.assertNotIn("Top category movement:", output.getvalue())
+        self.assertNotIn("Top signal movement:", output.getvalue())
+        self.assertNotIn("Top company movement:", output.getvalue())
+
     def test_report_adapter_delegates_to_market_intelligence_module(self):
         conn = object()
         skill_changes = [
@@ -741,6 +762,14 @@ class MarketIntelligenceReportTests(unittest.TestCase):
         self.assertIn("--- MARKET INTELLIGENCE ---", output.getvalue())
         self.assertIn("Market direction: Flat", output.getvalue())
         self.assertIn("Top signal: AI", output.getvalue())
+        self.assertIn("--- QUICK READ ---", output.getvalue())
+        self.assertIn(
+            "* Market is flat with HIGH evidence confidence.",
+            output.getvalue(),
+        )
+        self.assertNotIn("Top category movement:", output.getvalue())
+        self.assertNotIn("Top signal movement:", output.getvalue())
+        self.assertNotIn("Top company movement:", output.getvalue())
 
 
 if __name__ == "__main__":

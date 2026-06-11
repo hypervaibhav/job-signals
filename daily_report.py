@@ -593,6 +593,39 @@ def print_market_intelligence(market_intelligence):
             print(f"- {caveat}")
 
 
+def print_quick_read(market_intelligence):
+    print("\n--- QUICK READ ---\n")
+
+    direction = market_intelligence["market_direction"].lower()
+    evidence_level = market_intelligence["evidence_confidence"]["level"]
+    print(
+        f"* Market is {direction} with {evidence_level} evidence confidence."
+    )
+
+    top_signal = market_intelligence["top_signal"]
+    if top_signal:
+        print(f"* {top_signal['signal']} remains the strongest current signal.")
+    else:
+        print("* No leading signal is available yet.")
+
+    strategic_themes = market_intelligence["strategic_themes"]
+    if strategic_themes:
+        print(
+            f"* {strategic_themes[0]['theme']} is the leading strategic theme."
+        )
+    else:
+        print("* No strategic theme is leading yet.")
+
+    if any(
+        theme.get("confidence") == "Low"
+        for theme in strategic_themes
+    ):
+        print(
+            "* Strategic theme confidence remains early; "
+            "interpret theme movement cautiously."
+        )
+
+
 def print_strategic_themes(company_intelligence_rows, limit=5):
     print("\n--- STRATEGIC THEMES ---\n")
 
@@ -1018,27 +1051,7 @@ def print_daily_report():
     print_strategic_themes(company_intelligence_rows)
     print_market_intelligence(market_intelligence)
     print_company_intelligence_highlights(company_intelligence_rows)
-
-    print("\n--- QUICK READ ---\n")
-
-    growing_categories = [x for x in category_changes if x[2] > 0]
-    growing_skills = [x for x in skill_changes if x[2] > 0]
-    growing_companies = [x for x in company_changes if x[2] > 0]
-
-    if growing_categories:
-        print(f"Top category movement: {growing_categories[0][0]} ({growing_categories[0][2]:+})")
-    else:
-        print("Top category movement: none detected")
-
-    if growing_skills:
-        print(f"Top signal movement: {growing_skills[0][0]} ({growing_skills[0][2]:+})")
-    else:
-        print("Top signal movement: none detected")
-
-    if growing_companies:
-        print(f"Top company movement: {growing_companies[0][0]} ({growing_companies[0][2]:+})")
-    else:
-        print("Top company movement: none detected")
+    print_quick_read(market_intelligence)
 
     print("\n==============================\n")
 
