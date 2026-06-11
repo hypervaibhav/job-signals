@@ -1,5 +1,6 @@
 import sqlite3
 import sys
+from datetime import datetime
 
 from strategic_theme_lifecycle import classify_theme_lifecycle
 from strategic_theme_history import get_theme_history
@@ -22,7 +23,9 @@ def _get_persisted_theme_names(conn, scope, engine_version):
 
 
 def _format_timestamp(timestamp):
-    return timestamp if timestamp is not None else "never"
+    if timestamp is None:
+        return "never"
+    return datetime.fromtimestamp(int(timestamp)).strftime("%Y-%m-%d %I:%M %p")
 
 
 def _format_members(companies):
