@@ -4,6 +4,7 @@ from datetime import datetime
 
 from strategic_theme_lifecycle import classify_theme_lifecycle
 from strategic_theme_history import get_theme_history
+from strategic_theme_narratives import generate_theme_lifecycle_narrative
 
 
 DEFAULT_DB_PATH = "jobs.db"
@@ -34,10 +35,12 @@ def _format_members(companies):
 
 def _format_theme_history(history):
     lifecycle = classify_theme_lifecycle(history)
+    narrative = generate_theme_lifecycle_narrative(lifecycle, history)
 
     return (
         f"{history['theme']}\n"
         f"Lifecycle: {lifecycle}\n"
+        f"Explanation: {narrative}\n"
         f"Persistence: {history['snapshots_active']}/"
         f"{history['total_eligible_snapshots']} snapshots\n"
         f"Persistence score: {history['persistence_score'] * 100:.1f}%\n"
