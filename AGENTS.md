@@ -22,6 +22,18 @@ from public job postings.
 
 Phase 2: Intelligence Layer
 
+## Business Objective
+
+Job Signals should evolve toward monetizable labor market intelligence.
+
+Prefer features that improve:
+- signal quality
+- strategic insight
+- predictive value
+- productization potential
+
+Avoid features that are interesting but do not increase intelligence value.
+
 ## Architecture Ownership
 
 scraper.py
@@ -143,6 +155,32 @@ Testing Strategy
 
 ## Codex Workflow
 
+## Codex Task Principles
+
+When proposing Codex tasks:
+
+1. Prefer inspection before implementation.
+2. Prefer characterization tests before production code.
+3. Keep tasks small and bounded.
+4. Optimize for minimal diffs and clean commits.
+5. Respect AGENTS.md ownership rules.
+6. Do not propose architecture that duplicates existing persistence, taxonomy, lifecycle, or narrative logic.
+7. When uncertain, inspect the repository before proposing implementation.
+8. Assume Codex usage is valuable and avoid unnecessarily large tasks.
+9. Preserve architectural layering:
+
+   calculation
+   ↓
+   persistence
+   ↓
+   lifecycle
+   ↓
+   narratives
+   ↓
+   presentation
+
+10. Extend existing intelligence systems before introducing new systems.
+
 Development Process
 
 * For non-trivial features:
@@ -200,6 +238,8 @@ Run:
 ./venv/bin/python -m unittest discover -v
 
 ./venv/bin/python -m compileall .
+
+git diff --check
 
 If relevant:
 
