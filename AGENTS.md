@@ -51,6 +51,34 @@ daily_report.py
 signal_taxonomy.py
 - signal definitions
 
+role_taxonomy.py
+- canonical role classification
+
+strategic_themes.py
+- strategic theme calculation
+- theme snapshot calculation
+
+strategic_theme_history.py
+- strategic theme persistence
+- theme memory
+- historical theme metrics
+
+strategic_theme_lifecycle.py
+- theme lifecycle classification
+- emerging / stable / expanding / contracting / disappeared labels
+
+strategic_theme_narratives.py
+- theme lifecycle explanations
+- theme narrative generation
+
+strategic_theme_backfill.py
+- historical theme reconstruction
+- version-isolated backfill
+
+theme_history_report.py
+- standalone theme history readout
+- theme lifecycle and narrative presentation
+
 Company History
 
 * company_history.py is the authoritative source for:
@@ -77,6 +105,35 @@ Signal Taxonomy
     * canonical AI-related detection
 * Use signal_taxonomy.is_ai_related() when determining whether a posting is AI-related.
 * Avoid creating additional AI-detection implementations.
+
+Strategic Theme Intelligence
+
+* strategic_themes.py owns:
+    * strategic theme calculation
+    * theme snapshot calculation
+    * canonical mapping from company archetypes to strategic themes
+* strategic_theme_history.py is the authoritative source for:
+    * theme persistence
+    * theme first detected timestamps
+    * theme latest detected timestamps
+    * theme active snapshot counts
+    * theme eligible snapshot counts
+    * theme persistence score
+    * current company count
+    * peak company count
+    * theme membership history
+* strategic_theme_lifecycle.py owns lifecycle classification:
+    * Emerging
+    * Stable
+    * Expanding
+    * Contracting
+    * Disappeared
+* strategic_theme_narratives.py owns deterministic theme lifecycle explanations.
+* strategic_theme_backfill.py owns historical reconstruction and should default to an isolated engine version such as v2-backfill.
+* theme_history_report.py owns standalone inspection and presentation of theme history.
+* Do not use detect_strategic_themes() for persistence or backfill because it applies presentation filtering.
+* Use calculate_theme_snapshot() when complete internal theme snapshots are required.
+* Keep daily_report.py focused on orchestration and presentation.
 
 Testing Strategy
 
@@ -117,9 +174,13 @@ Strategic Theme Engine
 * Preserve separation between:
     * calculation
     * persistence
+    * lifecycle classification
+    * narrative generation
     * presentation
 * Keep daily_report.py focused on orchestration and presentation.
 * Keep strategic intelligence calculations inside domain modules.
+* Do not duplicate strategic theme persistence, lifecycle, narrative, or backfill logic.
+* Keep live observed history and reconstructed backfill history version-isolated unless explicitly instructed otherwise.
 
 ## Rules
 

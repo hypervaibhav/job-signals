@@ -298,7 +298,10 @@ snapshot_metadata
 
 ---
 
-## Planned Modules
+## Intelligence Modules
+
+
+The following modules are active components of the intelligence architecture.
 
 ### strategic_themes.py
 
@@ -310,6 +313,128 @@ Examples:
 - Enterprise Expansion
 - Platform Maturity
 - AI Infrastructure Growth
+
+---
+
+### strategic_theme_history.py
+
+Purpose:
+- Strategic theme memory and persistence layer.
+
+Responsibilities:
+- Theme persistence tracking
+- Theme history storage
+- First seen tracking
+- Latest seen tracking
+- Theme persistence metrics
+- Historical theme observations
+
+Owns:
+- first_detected
+- latest_detected
+- snapshots_active
+- total_eligible_snapshots
+- persistence_score
+- current_company_count
+- peak_company_count
+- membership history
+
+Should NOT contain:
+- Lifecycle classification
+- Narrative generation
+- Report formatting
+
+---
+
+### strategic_theme_lifecycle.py
+
+Purpose:
+- Strategic theme lifecycle classification.
+
+Responsibilities:
+- Emerging detection
+- Stable detection
+- Expanding detection
+- Contracting detection
+- Disappeared detection
+
+Uses:
+- strategic_theme_history.py
+
+Owns:
+- Theme lifecycle interpretation
+
+Should NOT contain:
+- Persistence storage
+- Narrative generation
+- Report formatting
+
+---
+
+### strategic_theme_narratives.py
+
+Purpose:
+- Strategic theme interpretation layer.
+
+Responsibilities:
+- Lifecycle explanations
+- Theme narratives
+- Human-readable interpretation of theme history
+
+Uses:
+- strategic_theme_history.py
+- strategic_theme_lifecycle.py
+
+Owns:
+- Theme-level narratives
+
+Should NOT contain:
+- Persistence storage
+- Lifecycle classification
+- Report formatting
+
+---
+
+### strategic_theme_backfill.py
+
+Purpose:
+- Historical strategic theme reconstruction.
+
+Responsibilities:
+- Historical theme backfill
+- Reconstructing theme snapshots from historical job snapshots
+- Safe version-isolated reconstruction
+
+Uses:
+- company intelligence reconstruction
+- strategic_themes.py
+- strategic_theme_history.py
+
+Should NOT contain:
+- Live reporting
+- Narrative generation
+
+---
+
+### theme_history_report.py
+
+Purpose:
+- Strategic theme inspection and debugging report.
+
+Responsibilities:
+- Theme history readout
+- Lifecycle display
+- Narrative display
+- Human-readable theme memory inspection
+
+Uses:
+- strategic_theme_history.py
+- strategic_theme_lifecycle.py
+- strategic_theme_narratives.py
+
+Should NOT contain:
+- Persistence logic
+- Theme calculation
 
 ---
 
@@ -325,6 +450,23 @@ Future Responsibilities:
 
 ---
 
+### theme_confidence.py
+
+Purpose:
+- Strategic theme confidence scoring.
+
+Future Responsibilities:
+- Theme confidence calculation
+- Confidence normalization
+- Confidence interpretation
+- Confidence support for market intelligence
+
+Uses:
+- strategic_theme_history.py
+- strategic_theme_lifecycle.py
+
+---
+
 ## Company Intelligence Data Flow
 
 job_snapshots
@@ -335,6 +477,26 @@ job_snapshots
 
 Design Rule:
 company_history.py is the authoritative source for persistence and observation-window metrics.
+
+---
+
+## Strategic Theme Intelligence Data Flow
+
+job_snapshots
+→ company_intelligence.py
+→ strategic_themes.py
+→ strategic_theme_history.py
+→ strategic_theme_lifecycle.py
+→ strategic_theme_narratives.py
+→ theme_history_report.py
+
+Design Rule:
+strategic_theme_history.py is the authoritative source for theme persistence and historical metrics.
+Lifecycle classification should flow through strategic_theme_lifecycle.py.
+Narrative generation should flow through strategic_theme_narratives.py.
+
+Never use detect_strategic_themes() for persistence or backfill.
+Use calculate_theme_snapshot() whenever complete internal theme snapshots are required.
 
 ---
 
@@ -371,5 +533,7 @@ Jobs
 → Prediction
 
 Then place it in the module that owns that level.
+
+Do not duplicate persistence, taxonomy, lifecycle, or narrative logic across modules.
 
 Avoid placing new intelligence logic directly into daily_report.py.

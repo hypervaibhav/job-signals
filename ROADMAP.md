@@ -2,7 +2,7 @@
 
 ## NOW
 
-### Market Intelligence Layer
+### Advanced Market Intelligence
 
 Goal:
 Move from company-level intelligence to market-level intelligence.
@@ -64,14 +64,14 @@ Goal:
 Evolve strategic themes from snapshot observations into historical market intelligence.
 
 Focus:
-- Theme persistence
+- Theme confidence
 - Theme acceleration
-- Theme history tracking
+- Market-level theme intelligence
+- Theme-to-theme relationships
 - Theme conviction
-- Theme lifecycle analysis
 
 Reason:
-Strategic Theme Engine v1 is complete. The next step is understanding how themes evolve over time.
+Strategic Theme History, Lifecycle, Readout, Narratives, and Historical Backfill are complete. The next step is improving confidence, acceleration, and market-level intelligence built on top of accumulated theme history.
 
 ---
 
@@ -87,12 +87,35 @@ Potential Features:
 
 ---
 
+### Intelligence Productization
+
+Goal:
+Convert intelligence outputs into products that can be consumed by users.
+
+Potential Directions:
+- Market intelligence reports
+- Company intelligence reports
+- Founder intelligence dashboards
+- Recruiter intelligence tools
+- Investor intelligence products
+
+Focus:
+Validate whether generated intelligence is valuable enough for users to consume or purchase.
+
+Prerequisite:
+Reliable intelligence generation.
+
 ### Predictive Intelligence
 
+Goal:
+Identify likely future market developments before they become obvious.
+
 Potential Features:
-- Signal persistence forecasting
-- Company hiring forecasts
-- Theme forecasting
+- Emerging theme detection
+- Theme acceleration forecasting
+- Technology adoption forecasting
+- Strategic hiring trend forecasting
+- Company expansion forecasting
 
 Prerequisite:
 Months of historical data.
@@ -152,6 +175,16 @@ Completed:
 - Taxonomy characterization tests
 - Canonical AI-related detection
 - Strategic signal separation from role categories
+- Strategic Theme History
+- Strategic Theme Persistence
+- Strategic Theme Lifecycle Classification
+- Strategic Theme Readout
+- Strategic Theme Lifecycle Narratives
+- Strategic Theme Historical Backfill
+- Human-readable Theme History Reporting
+- Theme History Characterization Tests
+- Theme Lifecycle Characterization Tests
+- Theme Narrative Characterization Tests
 - Single-source persistence architecture
 
 - Company trend classification
