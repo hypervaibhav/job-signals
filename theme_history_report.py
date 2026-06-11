@@ -1,6 +1,7 @@
 import sqlite3
 import sys
 
+from strategic_theme_lifecycle import classify_theme_lifecycle
 from strategic_theme_history import get_theme_history
 
 
@@ -29,8 +30,11 @@ def _format_members(companies):
 
 
 def _format_theme_history(history):
+    lifecycle = classify_theme_lifecycle(history)
+
     return (
         f"{history['theme']}\n"
+        f"Lifecycle: {lifecycle}\n"
         f"Persistence: {history['snapshots_active']}/"
         f"{history['total_eligible_snapshots']} snapshots\n"
         f"Persistence score: {history['persistence_score'] * 100:.1f}%\n"
