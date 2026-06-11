@@ -2,6 +2,7 @@ import sqlite3
 import tempfile
 import unittest
 from contextlib import redirect_stdout
+from datetime import datetime
 from io import StringIO
 from pathlib import Path
 
@@ -27,6 +28,10 @@ def make_complete_snapshot(commercialization=None, product=None, research=None):
         make_theme("AI Product Expansion", product or []),
         make_theme("AI Research Expansion", research or []),
     ]
+
+
+def format_expected_timestamp(snapshot_time):
+    return datetime.fromtimestamp(int(snapshot_time)).strftime("%Y-%m-%d %I:%M %p")
 
 
 class ThemeHistoryReportTests(unittest.TestCase):
@@ -81,8 +86,8 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "Persistence score: 100.0%\n"
                 "Current company count: 2\n"
                 "Peak company count: 2\n"
-                "First seen: 100\n"
-                "Latest seen: 200\n"
+                f"First seen: {format_expected_timestamp(100)}\n"
+                f"Latest seen: {format_expected_timestamp(200)}\n"
                 "Current members: Integrate, Levelai\n"
                 "\n"
                 "AI Commercialization\n"
@@ -91,8 +96,8 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "Persistence score: 100.0%\n"
                 "Current company count: 1\n"
                 "Peak company count: 1\n"
-                "First seen: 100\n"
-                "Latest seen: 200\n"
+                f"First seen: {format_expected_timestamp(100)}\n"
+                f"Latest seen: {format_expected_timestamp(200)}\n"
                 "Current members: Mistral\n"
                 "\n"
                 "AI Research Expansion\n"
@@ -118,6 +123,76 @@ class ThemeHistoryReportTests(unittest.TestCase):
         self.assertIn("AI Research Expansion", report)
         self.assertIn("Current company count: 0", report)
         self.assertIn("Current members: none", report)
+
+    def test_report_formats_first_seen_as_human_readable_timestamp(self):
+        first_seen = 1781198700
+        latest_seen = 1781202300
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            first_seen,
+            make_complete_snapshot(product=["Integrate"]),
+            eligible_company_count=3,
+        )
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            latest_seen,
+            make_complete_snapshot(product=["Integrate"]),
+            eligible_company_count=3,
+        )
+        module = self.report_module()
+
+        report = module.build_theme_history_report(self.conn)
+
+        self.assertIn(
+            f"First seen: {format_expected_timestamp(first_seen)}\n",
+            report,
+        )
+
+    def test_report_formats_latest_seen_as_human_readable_timestamp(self):
+        first_seen = 1781198700
+        latest_seen = 1781202300
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            first_seen,
+            make_complete_snapshot(product=["Integrate"]),
+            eligible_company_count=3,
+        )
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            latest_seen,
+            make_complete_snapshot(product=["Integrate"]),
+            eligible_company_count=3,
+        )
+        module = self.report_module()
+
+        report = module.build_theme_history_report(self.conn)
+
+        self.assertIn(
+            f"Latest seen: {format_expected_timestamp(latest_seen)}\n",
+            report,
+        )
+
+    def test_report_does_not_include_raw_unix_timestamp_values(self):
+        first_seen = 1781198700
+        latest_seen = 1781202300
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            first_seen,
+            make_complete_snapshot(product=["Integrate"]),
+            eligible_company_count=3,
+        )
+        strategic_theme_history.save_theme_snapshot(
+            self.conn,
+            latest_seen,
+            make_complete_snapshot(product=["Integrate"]),
+            eligible_company_count=3,
+        )
+        module = self.report_module()
+
+        report = module.build_theme_history_report(self.conn)
+
+        self.assertNotIn(f"First seen: {first_seen}\n", report)
+        self.assertNotIn(f"Latest seen: {latest_seen}\n", report)
 
     def test_report_includes_lifecycle_for_each_theme(self):
         self.save_sample_history()
@@ -308,8 +383,8 @@ class ThemeHistoryReportTests(unittest.TestCase):
                 "Persistence score: 100.0%\n"
                 "Current company count: 1\n"
                 "Peak company count: 1\n"
-                "First seen: 100\n"
-                "Latest seen: 100\n"
+                f"First seen: {format_expected_timestamp(100)}\n"
+                f"Latest seen: {format_expected_timestamp(100)}\n"
                 "Current members: Integrate\n"
                 "\n"
                 "AI Commercialization\n"
